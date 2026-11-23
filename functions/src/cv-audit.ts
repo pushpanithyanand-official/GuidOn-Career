@@ -6,6 +6,7 @@ const internalId = z.string().uuid();
 
 export const cvWorkspaceInputSchema = z.object({
   clientRequestId: internalId,
+  jobId: internalId.optional(),
   company: part,
   designation: part,
   location: part,
