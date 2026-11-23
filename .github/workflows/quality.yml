@@ -42,3 +42,22 @@ jobs:
         run: npm run check
       - name: Test backend contracts
         run: npm test
+
+  security-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Set up Java for Firebase emulators
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install security test dependencies
+        run: npm install --prefix functions --no-audit --no-fund
+      - name: Test private data rules against local Firebase emulators
+        run: npx --yes firebase-tools@15.0.0 emulators:exec --only firestore,storage --project demo-guidon-career-security "npm run test:security --prefix functions"
