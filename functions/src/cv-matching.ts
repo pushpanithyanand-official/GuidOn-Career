@@ -93,3 +93,19 @@ export function cleanJobDescription(input: string) {
   if (clean !== original.trim()) cleanupNotes.push('Normalised line breaks and whitespace; retained requirements.');
   return { originalText: input, cleanedText: clean, cleanupNotes, confirmedByUser: false };
 }
+
+/** Post-CV recruiter ratings may cite only evidence visibly represented in the exported CV. */
+export function validateVisibleRecruiterEvidence(
+  rawAssessment: z.infer<typeof recruiterAssessmentSchema>,
+  visibleEvidenceIds: readonly string[],
+) {
+  const assessment = recruiterAssessmentSchema.parse(rawAssessment);
+  const visible = new Set(visibleEvidenceIds);
+  const missing: { category: string; evidenceId: string }[] = [];
+  for (const category of assessment.criteria) {
+    for (const evidenceId of category.evidenceIds) {
+      if (!visible.has(evidenceId)) missing.push({ category: category.category, evidenceId });
+    }
+  }
+  return { supported: missing.length === 0, missing };
+}
