@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { cleanJobDescription, validateJdRequirements,
-  validateAtsKeywordsAgainstJd, verifiedEvidenceIds, validateRecruiterEvidence } =
+  validateAtsKeywordsAgainstJd, verifiedEvidenceIds, validateRecruiterEvidence, validateVisibleRecruiterEvidence } =
   require('../lib/cv-matching.js');
 const { recruiterCategories } = require('../lib/cv-workflow.js');
 const jobId = '550e8400-e29b-41d4-a716-446655440001';
@@ -65,4 +65,14 @@ test('recruiter score evidence IDs cannot be invented by a model', () => {
   const fake = criteria.map((entry, i) => i === 0 ?
     { ...entry, evidenceIds: ['550e8400-e29b-41d4-a716-446655440099'] } : entry);
   assert.equal(validateRecruiterEvidence(profile, { ...assessment, criteria: fake }).supported, false);
+});
+
+test('post-CV recruiter fit cannot count profile evidence omitted from the one-page CV', () => {
+  const criteria = recruiterCategories.map(category => ({
+    category, rating: 3, rationale: 'Evidence appears in profile', evidenceIds: [jobId],
+  }));
+  const assessment = { criteria, rubricVersion: 'recruiter-v1', evidenceBasis: 'rendered_cv' };
+  assert.equal(validateVisibleRecruiterEvidence(assessment, [jobId]).supported, true);
+  assert.equal(validateVisibleRecruiterEvidence(assessment, []).supported, false);
+  assert.equal(validateVisibleRecruiterEvidence(assessment, [metricId]).supported, false);
 });
