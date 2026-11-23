@@ -74,9 +74,16 @@ def inspect_pdf(pdf_path: str) -> dict:
                 # a single PDF span. Inspect these too; never silently skip them.
                 if anchor is None:
                     anchor = line
+                inline_bullet = anchor is line
+                # Wrapped lines begin after the inline bullet indent. A new
+                # role header starts back at the section's left edge; do not
+                # mistakenly count that header as a third bullet line.
+                minimum_continuation_left = (
+                    anchor['left'] + 6 if inline_bullet else anchor['left'] - 3
+                )
                 lines = 1
                 last_bottom = anchor['bottom']
-                seen_anchor = anchor is line
+                seen_anchor = inline_bullet
                 for following in entries[i + 1:]:
                     if not seen_anchor:
                         if following is anchor:
@@ -85,7 +92,7 @@ def inspect_pdf(pdf_path: str) -> dict:
                     if BULLET.match(following['text']) or SECTION_HEADING.fullmatch(following['text']):
                         break
                     if (0 <= following['top'] - last_bottom <= 12 and
-                        following['left'] >= anchor['left'] - 3):
+                        following['left'] >= minimum_continuation_left):
                         lines += 1
                         last_bottom = following['bottom']
                     else:
