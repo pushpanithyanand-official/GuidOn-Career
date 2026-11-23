@@ -127,7 +127,7 @@ export const auditArtifactSchema = z.object({
   category: z.enum(['jd_input', 'jd_cleaning', 'profile_snapshot', 'match',
     'gap_report', 'user_feedback', 'score_pre_cv', 'generation_input',
     'generation_output', 'cv_docx', 'cv_pdf', 'cv_text', 'render_qa',
-    'score_post_cv', 'revision_request', 'token_usage', 'cover_letter']),
+    'score_post_cv', 'revision_request', 'user_approval', 'token_usage', 'cover_letter']),
   path: z.string().max(500).regex(/^[0-9]{2}-[a-z-]+\/[a-zA-Z0-9_.-]+$/),
   contentType: z.enum(['application/json', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/pdf', 'text/plain']),
   sha256: z.string().regex(/^[a-f0-9]{64}$/),
