@@ -1,0 +1,66 @@
+name: Deploy GuidOn callable backend (manual protected gate)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Type DEPLOY_GUIDON_CORE_FUNCTIONS to approve Functions-only deployment."
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: guidon-core-backend
+  cancel-in-progress: false
+
+jobs:
+  deploy-backend:
+    if: github.ref == 'refs/heads/main'
+    environment: guidon-backend-release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate exact Firebase project, identity and release acknowledgement
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+          TARGET: ${{ vars.GUIDON_FIREBASE_PROJECT_ID }}
+          IDENTITY: ${{ vars.GUIDON_GCP_WIF_PROVIDER }}
+          ACCOUNT: ${{ vars.GUIDON_GCP_DEPLOY_SERVICE_ACCOUNT }}
+        run: |
+          set -eu
+          test "$CONFIRMATION" = "DEPLOY_GUIDON_CORE_FUNCTIONS" || {
+            echo "Explicit authorisation is required"; exit 1;
+          }
+          test "$TARGET" = "guidon-career-fcda2" || {
+            echo "Functions must deploy only to the user's Firebase project, not guidon-career or an unrelated project"; exit 1;
+          }
+          test -n "$IDENTITY" && test -n "$ACCOUNT" || {
+            echo "Approved OIDC identity and deployment service account are required"; exit 1;
+          }
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install and test callable backend
+        run: |
+          npm install --prefix functions --no-audit --no-fund
+          npm run check --prefix functions
+          npm test --prefix functions
+      - name: Authenticate without long-lived service-account key
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GUIDON_GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GUIDON_GCP_DEPLOY_SERVICE_ACCOUNT }}
+          project_id: guidon-career-fcda2
+          token_format: access_token
+      - name: Deploy callable Functions only
+        run: |
+          npx --yes firebase-tools@15.0.0 deploy --only functions --project guidon-career-fcda2 --non-interactive
+      - name: Record release boundaries
+        run: |
+          echo "Deployed callable Functions only to guidon-career-fcda2."
+          echo "Firestore and Storage rules remain unchanged and deny client reads/writes."
+          echo "Base-CV uploads remain disabled unless separately enabled after malware scanning."
+          echo "No Gmail integration or AI provider credentials are activated."
