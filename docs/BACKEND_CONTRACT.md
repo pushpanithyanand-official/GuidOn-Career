@@ -13,9 +13,14 @@ Call these through the Firebase HTTPS callable client SDK. SDK includes the sign
 | `getMyWorkspace` | `{}` | `{uid,capabilities,account,profile,baseCvs[]}` | Creates a private account shell on first authenticated request; returns only authenticated UID's data |
 | `beginBaseCvUpload` | `{fileName,mimeType,sizeBytes,consentToStore:true,clientRequestId:UUID}` | `{uploadId,storagePath,maxSizeBytes,expiresAt}` | Bounded idempotent upload slot (6/day, 100 total per user); does **not** call AI |
 | `completeBaseCvUpload` | `{uploadId}` | `{uploadId,status:'uploaded'}` | Confirms exact object, size and MIME against own upload slot |
-| `saveMyProfileDraft` | `{profile,sourceCvId?}` | `{state:'unconfirmed',saved:true}` | Save unverified edits, never promote an AI draft to evidence |\n| `getMyCareerProfile` | `{}` | `{confirmed,draft}` | Read only caller-owned confirmed profile and current draft |\n| `confirmCareerProfile` | `{profile,userConfirmed:true,sourceCvId?,expectedRevisionId?}` | `{revisionId,state:'user_confirmed',schemaVersion:2}` | Explicit approval, version conflict guard and immutable history |\n| `listMyProfileRevisions` | `{limit?:1..20}` | `{revisions:[...]}` | Read a bounded personal version history |
+| `saveMyProfileDraft` | `{profile,sourceCvId?}` | `{state:'unconfirmed',saved:true}` | Save unverified edits, never promote an AI draft to evidence |
+| `getMyCareerProfile` | `{}` | `{confirmed,draft}` | Read only caller-owned confirmed profile and current draft |
+| `confirmCareerProfile` | `{profile,userConfirmed:true,sourceCvId?,expectedRevisionId?}` | `{revisionId,state:'user_confirmed',schemaVersion:2}` | Explicit approval, version conflict guard and immutable history |
+| `listMyProfileRevisions` | `{limit?:1..20}` | `{revisions:[...]}` | Read a bounded personal version history |
 
-All requests authenticated by Firebase; no client-supplied `uid`. Use exact schemas in `functions/src/contracts.ts`.\n\n**Deployment feature gate:** `CV_UPLOADS_ENABLED` defaults to disabled. The server returns `capabilities.cvUploadsEnabled=false` and rejects `beginBaseCvUpload` until a dedicated environment is deliberately configured *after* file-scanning, consent, retention, abuse and rules testing. `aiProfileExtractionEnabled` is also currently false.
+All requests authenticated by Firebase; no client-supplied `uid`. Use exact schemas in `functions/src/contracts.ts`.
+
+**Deployment feature gate:** `CV_UPLOADS_ENABLED` defaults to disabled. The server returns `capabilities.cvUploadsEnabled=false` and rejects `beginBaseCvUpload` until a dedicated environment is deliberately configured *after* file-scanning, consent, retention, abuse and rules testing. `aiProfileExtractionEnabled` is also currently false.
 
 ## Example SDK usage (UI technology-independent)
 
@@ -42,7 +47,13 @@ const start = await httpsCallable(backend, 'beginBaseCvUpload')({
 
 ## Profile schema
 
-The typed schema supports:\n- Legal/display names, contact details, headline, summary, location and links\n- Skills, target roles/locations, preferences, notice period and salary range\n- Repeatable employment, education, certifications, projects, languages and achievements\n- Jurisdiction-specific work eligibility with explicit `yes` / `no` / `unknown` entries\n- Explicit user-confirmed evidence separate from editable `profileDrafts`\n- Revision history with `expectedRevisionId` preventing stale-editor overwrites
+The typed schema supports:
+- Legal/display names, contact details, headline, summary, location and links
+- Skills, target roles/locations, preferences, notice period and salary range
+- Repeatable employment, education, certifications, projects, languages and achievements
+- Jurisdiction-specific work eligibility with explicit `yes` / `no` / `unknown` entries
+- Explicit user-confirmed evidence separate from editable `profileDrafts`
+- Revision history with `expectedRevisionId` preventing stale-editor overwrites
 
 The profile is not yet the complete Phase 2 model. Future versioned additions cover qualifications, languages, work eligibility per jurisdiction, verified evidence, Answer Bank, sensitive information segregation, employer-specific answers and source anchors.
 
@@ -66,7 +77,9 @@ Shared public vacancy metadata must **never** contain per-user statuses or appli
 
 ## Status and trust rules
 
-- `awaiting_upload → uploaded` means the original file is present, **not** that its contents have been scanned or extracted. `scanStatus` remains `not_scanned` until a separate scanner exists. The object is not ready for AI extraction.\n- Upload slots expire after 30 minutes. Reusing the same `clientRequestId` returns the same slot without consuming another quota; a new UUID is required after expiry.\n- Each user is limited to 6 base-CV upload intents per UTC day and 100 total until an explicit retention/administrative quota workflow is introduced. The `CV_UPLOADS_ENABLED` flag must be explicitly enabled before any intent can be created.
+- `awaiting_upload → uploaded` means the original file is present, **not** that its contents have been scanned or extracted. `scanStatus` remains `not_scanned` until a separate scanner exists. The object is not ready for AI extraction.
+- Upload slots expire after 30 minutes. Reusing the same `clientRequestId` returns the same slot without consuming another quota; a new UUID is required after expiry.
+- Each user is limited to 6 base-CV upload intents per UTC day and 100 total until an explicit retention/administrative quota workflow is introduced. The `CV_UPLOADS_ENABLED` flag must be explicitly enabled before any intent can be created.
 - `extractionStatus='not_requested'` until user explicitly requests AI processing under a clear privacy/cost notice.
 - AI-extracted drafts are never silently promoted to `user_confirmed`.
 - CVs remain private evidence; no external application is marked Applied automatically.
