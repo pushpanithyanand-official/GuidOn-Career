@@ -4,7 +4,7 @@ import {
   sendPasswordResetEmail, signInWithEmailAndPassword, signInWithPopup,
   signOut, type User,
 } from 'firebase/auth';
-import { firebaseAuth, isFirebaseConfigured } from './firebase';
+import { firebaseAuth, isFirebaseConfigured, isFirebaseAuthConfigured } from './firebase';
 import { callGuidon, safeError, type WorkspaceOverview } from './api';
 
 type Session = {
@@ -24,7 +24,7 @@ export function useSession() { return useContext(SessionContext); }
 export function AuthBoundary({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [workspace, setWorkspace] = useState<WorkspaceOverview | null>(null);
-  const [checking, setChecking] = useState(isFirebaseConfigured);
+  const [checking, setChecking] = useState(isFirebaseAuthConfigured);
   const [error, setError] = useState('');
 
   async function refresh() {
@@ -38,7 +38,7 @@ export function AuthBoundary({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(firebaseAuth, async next => {
       setChecking(true);
       setUser(next); setWorkspace(null); setError('');
-      if (next) {
+      if (next && isFirebaseConfigured) {
         try { setWorkspace(await callGuidon<WorkspaceOverview>('getMyWorkspace')); }
         catch (cause) { setError(safeError(cause)); }
       }
@@ -51,11 +51,14 @@ export function AuthBoundary({ children }: { children: ReactNode }) {
     logout: async () => { if (firebaseAuth) await signOut(firebaseAuth); },
   };
 
-  if (!isFirebaseConfigured) {
+  if (!isFirebaseAuthConfigured) {
     return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
   }
-  if (checking) return <div className="login-stage"><div className="login-panel"><h1>GuidOn Career</h1><p>Loading your private workspace…</p></div></div>;
-  if (!user) return <SignIn />;
+  if (checking) return <div className="login-stage"><div className="login-panel"><h1>GuidOn Career</h1><p>Checking your Firebase sign-in…</p></div></div>;
+  if (!user) return <SignIn previewOnly={!isFirebaseConfigured} />;
+  if (!isFirebaseConfigured) {
+    return <SparkAuthPreview user={user} logout={value.logout}/>;
+  }
   if (error || !workspace) {
     return <div className="login-stage"><div className="login-panel">
       <h1>Workspace connection</h1>
@@ -67,7 +70,27 @@ export function AuthBoundary({ children }: { children: ReactNode }) {
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;
 }
 
-function SignIn() {
+function SparkAuthPreview({ user, logout }: { user: User; logout: () => Promise<void> }) {
+  const [error, setError] = useState('');
+  return <div className="login-stage"><div className="login-panel">
+    <div className="login-brand"><strong>GuidOn</strong><span>CAREER</span></div>
+    <h1>Firebase sign-in verified</h1>
+    <p role="status">Signed in as <strong>{user.email ?? user.displayName ?? 'Google user'}</strong>.</p>
+    <div className="notice-panel">
+      <strong>Spark authentication-only test</strong>
+      <p>This session confirms that Firebase Authentication recognises your account.
+        The private Career Intelligence Profile, job history, CV generation, Firestore writes
+        and uploads are not enabled. Do not enter personal career information yet.</p>
+    </div>
+    {error && <p role="alert" className="form-error">{error}</p>}
+    <button className="primary-action" onClick={() => logout().catch(cause => setError(safeError(cause)))}>
+      Sign out
+    </button>
+    <p className="login-footnote">No career information has been saved by this test.</p>
+  </div></div>;
+}
+
+function SignIn({ previewOnly }: { previewOnly: boolean }) {
   const [mode, setMode] = useState<'login'|'register'|'reset'>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -101,7 +124,9 @@ function SignIn() {
     <div className="login-panel">
       <div className="login-brand"><strong>GuidOn</strong><span>CAREER</span></div>
       <h1>{mode === 'register' ? 'Create your private career workspace' : mode === 'reset' ? 'Reset your password' : 'Welcome back'}</h1>
-      <p>Your professional profile, documents and applications are separate from other users.</p>
+      <p>{previewOnly
+        ? 'Test Google and email sign-in on Spark. Private career data and job features are disabled in this test.'
+        : 'Your professional profile, documents and applications are separate from other users.'}</p>
       <form onSubmit={submit}>
         <label htmlFor="sign-in-email">Email</label>
         <input id="sign-in-email" type="email" required autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} />
@@ -116,7 +141,9 @@ function SignIn() {
         <button onClick={() => { setMode(mode === 'register' ? 'login' : 'register'); setError(''); }}>{mode === 'register' ? 'Already have an account? Sign in' : 'New here? Create account'}</button>
         <button onClick={() => { setMode(mode === 'reset' ? 'login' : 'reset'); setError(''); }}>{mode === 'reset' ? 'Back to sign in' : 'Forgot password?'}</button>
       </div>
-      <p className="login-footnote">Google sign-in and email/password must first be enabled in the independent Firebase project.</p>
+      <p className="login-footnote">{previewOnly
+        ? 'Authentication test only. No CV uploads, job records or other private backend services are active.'
+        : 'Use only career information you are authorised to save in this private workspace.'}</p>
     </div>
   </div>;
 }
