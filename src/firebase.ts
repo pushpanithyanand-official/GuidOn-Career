@@ -1,20 +1,31 @@
+import { guidonFirebaseWebConfig } from './firebase-web-config';
 import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
 import { getAuth, type Auth } from 'firebase/auth';
 import { getFunctions, type Functions } from 'firebase/functions';
 
-/** Public Firebase web keys only; never bundle service account or AI credentials. */
+/**
+ * Web App client identifiers have been registered by the project owner and
+ * checked in as public browser configuration. Optional local overrides are
+ * allowed only when they target this exact Firebase project.
+ */
 const env = import.meta.env;
 const config = {
-  apiKey: String(env.VITE_FIREBASE_API_KEY || ''),
-  authDomain: String(env.VITE_FIREBASE_AUTH_DOMAIN || ''),
-  projectId: String(env.VITE_FIREBASE_PROJECT_ID || ''),
-  storageBucket: String(env.VITE_FIREBASE_STORAGE_BUCKET || ''),
-  appId: String(env.VITE_FIREBASE_APP_ID || ''),
+  ...guidonFirebaseWebConfig,
+  apiKey: String(env.VITE_FIREBASE_API_KEY || guidonFirebaseWebConfig.apiKey),
+  authDomain: String(env.VITE_FIREBASE_AUTH_DOMAIN || guidonFirebaseWebConfig.authDomain),
+  projectId: String(env.VITE_FIREBASE_PROJECT_ID || guidonFirebaseWebConfig.projectId),
+  storageBucket: String(env.VITE_FIREBASE_STORAGE_BUCKET || guidonFirebaseWebConfig.storageBucket),
+  appId: String(env.VITE_FIREBASE_APP_ID || guidonFirebaseWebConfig.appId),
 };
+const correctProject =
+  config.projectId === guidonFirebaseWebConfig.projectId &&
+  config.appId === guidonFirebaseWebConfig.appId &&
+  config.authDomain === guidonFirebaseWebConfig.authDomain;
 const required = [config.apiKey, config.authDomain, config.projectId, config.appId];
-// Hosting can publish a static preview before authenticated backend release.
+// Web SDK configuration is complete; live private APIs remain explicitly gated.
+// Spark Firebase cannot deploy the project's current Cloud Functions backend.
 export const isFirebaseConfigured =
-  required.every(Boolean) && env.VITE_GUIDON_CORE_ENABLED === 'true';
+  correctProject && required.every(Boolean) && env.VITE_GUIDON_CORE_ENABLED === 'true';
 
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
