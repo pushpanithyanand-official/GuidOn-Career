@@ -1,7 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { cleanJobDescription, validateJdRequirements,
-  validateAtsKeywordsAgainstJd, verifiedEvidenceIds, validateRecruiterEvidence, validateVisibleRecruiterEvidence } =
+  validateAtsKeywordsAgainstJd, verifiedEvidenceIds, validateRecruiterEvidence, validateVisibleRecruiterEvidence, confirmedProfileEvidenceText } =
   require('../lib/cv-matching.js');
 const { recruiterCategories } = require('../lib/cv-workflow.js');
 const jobId = '550e8400-e29b-41d4-a716-446655440001';
@@ -75,4 +75,34 @@ test('post-CV recruiter fit cannot count profile evidence omitted from the one-p
   assert.equal(validateVisibleRecruiterEvidence(assessment, [jobId]).supported, true);
   assert.equal(validateVisibleRecruiterEvidence(assessment, []).supported, false);
   assert.equal(validateVisibleRecruiterEvidence(assessment, [metricId]).supported, false);
+});
+
+test('pre-CV ATS evidence text excludes unconfirmed numbers and private contact', () => {
+  const profile = {
+    professionalSummary: 'Financial reporting and forecasting',
+    contact: { email: 'private@example.org', phone: '+353000000000' },
+    skills: ['Power BI', 'SQL'],
+    experience: [{
+      id: jobId, employer: 'Employer', title: 'Analyst',
+      highlights: ['Financial reporting'],
+      keyNumbers: [
+        { id: metricId, label: 'Verified reporting uplift', value: 15, unit: '%',
+          verification: 'user_confirmed' },
+        { id: '550e8400-e29b-41d4-a716-446655440010',
+          label: 'Invented revenue', value: 9000, unit: 'USD', verification: 'unconfirmed' },
+      ],
+      starStories: [{
+        id: storyId, situation: 'Manual processes', task: 'Improve reporting',
+        action: 'Automated reconciliations', result: 'Improved throughput',
+        linkedKeyNumberIds: [metricId], verification: 'user_confirmed',
+      }],
+    }],
+  };
+  const text = confirmedProfileEvidenceText(profile);
+  assert.match(text, /Power BI/);
+  assert.match(text, /Verified reporting uplift/);
+  assert.match(text, /Automated reconciliations/);
+  assert.doesNotMatch(text, /Invented revenue/);
+  assert.doesNotMatch(text, /private@example\.org/);
+  assert.doesNotMatch(text, /\+353000000000/);
 });
