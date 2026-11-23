@@ -12,6 +12,8 @@ import re
 import subprocess
 import tempfile
 from pathlib import Path
+from zipfile import ZipFile, BadZipFile
+from xml.etree import ElementTree as ET
 
 import fitz
 
@@ -142,6 +144,62 @@ def inspect_pdf(pdf_path: str) -> dict:
         }
 
 
+
+WORD = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'
+WORD_NS = {'w': WORD}
+
+
+def inspect_docx_structure(docx_path: Path) -> dict:
+    """Fail closed on tables, text boxes and multicolumn Word structures."""
+    tables = text_boxes = graphics = header_footer_text = 0
+    columns = 1
+    try:
+        with ZipFile(docx_path) as archive:
+            members = [name for name in archive.namelist() if
+                       name == 'word/document.xml' or
+                       re.fullmatch(r'word/(header|footer)\d+\.xml', name)]
+            if 'word/document.xml' not in members:
+                raise ValueError('Missing main Word document')
+            for name in members:
+                # We inspect document and headers/footers, not just PDF text.
+                data = archive.read(name)
+                if len(data) > 8_000_000:
+                    raise ValueError('Word XML part too large for inspection')
+                root = ET.fromstring(data)
+                tables += len(root.findall('.//w:tbl', WORD_NS))
+                text_boxes += len(root.findall('.//w:txbxContent', WORD_NS))
+                graphics += len(root.findall('.//w:drawing', WORD_NS))
+                graphics += sum(1 for e in root.iter() if e.tag.endswith('}pict'))
+                if name != 'word/document.xml':
+                    header_footer_text += sum(1 for e in root.findall('.//w:t', WORD_NS)
+                                              if e.text and e.text.strip())
+                else:
+                    for cols in root.findall('.//w:cols', WORD_NS):
+                        count = cols.attrib.get(f'{{{WORD}}}num', '1')
+                        columns = max(columns, int(count))
+    except (BadZipFile, ET.ParseError, OSError, ValueError) as exc:
+        return {'passed': False, 'issues': ['invalid_docx_structure'],
+                'detail': str(exc)[:180], 'tableCount': None, 'textBoxCount': None,
+                'graphicsCount': None, 'columnCount': None,
+                'headerFooterTextCount': None}
+    issues = []
+    if tables:
+        issues.append('cv_tables_prohibited')
+    if text_boxes:
+        issues.append('cv_text_boxes_prohibited')
+    if columns != 1:
+        issues.append('cv_multiple_columns_prohibited')
+    if graphics:
+        issues.append('cv_graphics_prohibited')
+    if header_footer_text:
+        issues.append('cv_header_footer_text_prohibited')
+    return {'passed': not issues, 'issues': issues,
+            'tableCount': tables, 'textBoxCount': text_boxes,
+            'graphicsCount': graphics, 'columnCount': columns,
+            'headerFooterTextCount': header_footer_text}
+
+
+
 def render_docx(docx_path: Path) -> dict:
     with tempfile.TemporaryDirectory(prefix='guidon-cv-') as directory:
         temporary = Path(directory)
@@ -153,7 +211,12 @@ def render_docx(docx_path: Path) -> dict:
         pdf = temporary / (docx_path.stem + '.pdf')
         if result.returncode != 0 or not pdf.is_file():
             raise RuntimeError('CV render failed: ' + result.stderr[-500:])
-        return inspect_pdf(str(pdf))
+        report = inspect_pdf(str(pdf))
+        structure = inspect_docx_structure(docx_path)
+        report['wordStructure'] = structure
+        report['issues'].extend(structure['issues'])
+        report['passed'] = report['passed'] and structure['passed']
+        return report
 
 
 def main() -> None:
