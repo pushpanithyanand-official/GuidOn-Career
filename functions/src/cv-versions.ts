@@ -44,7 +44,7 @@ export function validateRenderedCvMedia(docx: Buffer, pdf: Buffer, plainText: st
 
 function normalizedPhrase(text: string) {
   return text.normalize('NFKC').toLocaleLowerCase('en')
-    .replace(/[^\\p{L}\\p{N}]+/gu, ' ').trim().replace(/\\s+/g, ' ');
+    .replace(/[^\p{L}\p{N}]+/gu, ' ').trim().replace(/\s+/g, ' ');
 }
 
 /**
