@@ -1,9 +1,11 @@
+import { type CvGenerationMode, generationModePolicy } from './cv-generation-mode';
+
 /** Versioned AI task instructions. Providers are adapters; business rules remain server-side. */
 export const cvPromptVersions = {
   jd: 'jd-analysis-v1',
   match: 'profile-jd-match-v1',
   gaps: 'concise-gaps-v1',
-  drafting: 'star-one-page-draft-v1',
+  drafting: 'star-one-page-draft-v2-modes',
   critique: 'cv-recruiter-critique-v1',
 } as const;
 
@@ -63,7 +65,7 @@ export function gapReviewTask(match: unknown, preCvScores: unknown) {
 }
 
 export function generateCvTask(confirmedEvidence: unknown, selectedTemplate: unknown,
-  cleanedJd: string, userFeedback: string) {
+  cleanedJd: string, userFeedback: string, generationMode: CvGenerationMode = 'evidence_first') {
   return {
     version: cvPromptVersions.drafting,
     system: [
@@ -71,14 +73,15 @@ export function generateCvTask(confirmedEvidence: unknown, selectedTemplate: unk
       'Preserve the selected base CV structure and formatting intent; do not promise pixel-perfect preservation when the source is incompatible.',
       'Use natural STAR-based accomplishment bullets: relevant context/task, decisive action and genuine result; cite source story and metric IDs.',
       'Limit every bullet to approximately two rendered lines; omit low-relevance wording instead of reducing font size below 10 pt.',
-      'Use consistent left-aligned sections and right-aligned dates; avoid tables, graphics and unparseable text boxes.',
+      'Use a strict SINGLE COLUMN: NO TABLES of any kind, no nested tables, no text boxes, no decorative columns, graphics or header/footer content. Use right aligned tab stops, not tables, to align dates.',
       'Avoid hyphens/dashes in narrative prose; prefer colon, semicolon and comma. Use dashes only where a heading, identifier or date requires them.',
       'Include relevant JD terms only when the underlying evidence truly supports the competency. Repetition and keyword stuffing are forbidden.',
       'When a one-page CV is impossible without omitting essential confirmed evidence, return a transparent blocked-for-user-prioritisation outcome.',
       'Do not generate a score yourself; the server scores the actual resulting CV independently.',
+      generationModePolicy(generationMode),
       sharedTrustRules,
     ].join('\n'),
-    input: { cleanedJd, confirmedEvidence, selectedTemplate, userFeedback },
+    input: { cleanedJd, confirmedEvidence, selectedTemplate, userFeedback, generationMode },
   };
 }
 
