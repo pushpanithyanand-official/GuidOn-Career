@@ -936,3 +936,35 @@ The 23 November 2026 source-plan acceptance audit remains authoritative. **All P
 **Execution priority:** isolated Firebase Hosting/Auth → CV-first profile and safe document intake → real staged CV engine → job/application records → integrated Chrome extension → optional Gmail job-alert intake → **later** automated application/interview email tracking → calendar/analytics, with security/consent milestones at each phase. The UI/UX designer remains free to redesign all screens while using these shared backend contracts.
 
 See [Phase Acceptance Audit](MASTER_PLAN_STAGE_AUDIT.md), [Hosting Launch Plan](WEBAPP_HOSTING_LAUNCH.md), [CV Builder Strict Specification](CV_BUILDER_STRICT_SPEC.md), and [Gmail Tracking Roadmap](GMAIL_INTEGRATION_APPLICATION_TRACKING.md).
+
+
+---
+
+# Addendum v1.5 — Firebase project bindings and working-core implementation checkpoint
+
+**23 November 2026 — Append-only update.** Every earlier requirement, phase exit criterion, CV scoring rule, extension safeguard and future Gmail capability remains in effect.
+
+## 34. Exact infrastructure projects supplied by the owner
+
+- **Firebase:** `guidon-career-fcda2` ([Firebase Console](https://console.firebase.google.com/project/guidon-career-fcda2/overview)) is the intended project for Hosting, web authentication, private Firestore/Storage and callable Functions.
+- **Google Cloud:** `guidon-career` ([GCP Console](https://console.cloud.google.com/home/dashboard?project=guidon-career)) is a **different project ID**. It may later host separate Cloud Run CV/AI workers after independent IAM and cross-project access review; it is not the GCP ID underlying Firebase `guidon-career-fcda2`.
+- **Website target:** `https://guidon-career-fcda2.web.app`, conditional on creation of its default Hosting site and a successful verified deployment. This is not yet a live URL we have confirmed.
+- A preview alias in `.firebaserc` and protected, manually approved GitHub workflows target **only** `guidon-career-fcda2`. A feature flag prevents showing a broken logged-in app before live backend verification. Owner-side Web SDK configuration, Auth providers, Firestore, Hosting, billing and deployment identity remain outstanding.
+- [Exact project binding and setup guidance](FIREBASE_PROJECT_SETUP.md).
+
+## 35. Actual working-core implementation added to the draft branch
+
+- **Email/Google sign-in, registration, reset, authenticated account bootstrap**, session boundary and same-user private workspace APIs now have frontend/back-end code. Live production authentication is not yet verified.
+- **Career Intelligence Profile editor:** manually add confirmed job and education experience, separate key numbers and complete STAR stories; save editable drafts, then approve immutable revisions. Base-CV-first secure upload, scanning and AI extraction are **not implemented**.
+- **Jobs:** user-owned manual job addition, JD/source capture, discovery filters, Smart Sort, favourites, status events and job details wired to callable APIs. Permitted live feeds and scalable index remain pending.
+- **Applications:** each submitted application now has an authenticated job-linked entity, immutable status history, interview details and optional approved CV-version association. Job card status derives from the confirmed application event. A mere Apply link click or autofill cannot mark Applied; user-confirmed rejection is recorded through the application timeline.
+- **CV Studio:** create private named workspaces, review cleaned JD and exact grounded requirements, select Evidence First or Think Creatively and inspect saved stage, scores and token records. Automatic AI matching, gaps, generation and post-render scoring are not connected.
+- **Real-document worker:** deterministic evidence-only fallback converts approved STAR stories into actual editable DOCX, text-extractable PDF and TXT, with single-column/no-table and one-page render QA. It is a *worker building block*, not a deployed AI CV generator; does not preserve an uploaded base CV's layout, does not produce user-facing downloads yet and cannot bypass scoring or human approval.
+
+## 36. Release status and remaining invariants
+
+**All original Phases 0–9 remain PARTIAL**, notwithstanding code, unit tests and emulator checks. No production Hosting or Functions release has been executed in this chat, and neither provided console link alone supplies credentials.
+
+Complete the actual Firebase services, Auth and privacy gates, real CV upload/scanning/AI extraction, source-grounded JD/profile matching, user-facing gap review, strict one-page output with actual pre/post dual scores, token/cost audit, versioned reruns, and tested secure downloads before treating core CV generation as finished. Keep legacy Chrome extension migration, current-page-only autofill, separate Gmail permissions and future application/interview intelligence intact.
+
+The **UI/UX designer retains full control** of final screens; the implemented screens are temporary functional scaffolding.
