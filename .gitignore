@@ -8,3 +8,8 @@ dist/
 *.log
 .DS_Store
 coverage/
+
+# Firebase backend compiled code
+functions/lib/
+functions/node_modules/
+.firebaserc
