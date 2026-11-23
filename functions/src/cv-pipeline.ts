@@ -4,7 +4,7 @@ import { z } from 'zod';
 import {
   cvWorkflowStageSchema, canTransitionCvStage, keywordSchema,
   recruiterAssessmentSchema, scoreRawAtsKeywords, scoreRecruiterFit,
-  scoreSnapshotSchema, cvQualityInputSchema, validateCvQuality,
+  scoreSnapshotSchema, cvQualityInputSchema, validateCvQuality, compactGapSchema,
 } from './cv-workflow';
 import { validateAtsKeywordsAgainstJd, validateRecruiterEvidence } from './cv-matching';
 import { sha256Bytes } from './cv-audit';
@@ -72,6 +72,14 @@ export async function recordCvPipelineStage(
   const base = `${target.directory}/stage-${input.stageRunId}`;
   const inputJson = json(input.input);
   const outputJson = json(input.output);
+  let gapSummary: { id: string; kind: string; prompt: string; resolution: string }[] | null = null;
+  if (input.nextStage === 'gap_review' || input.nextStage === 'awaiting_user_feedback') {
+    const rawGaps = (input.output as { gaps?: unknown })?.gaps;
+    const validatedGaps = compactGapSchema.array().max(5).parse(rawGaps);
+    gapSummary = validatedGaps.map(gap => ({
+      id: gap.id, kind: gap.kind, prompt: gap.prompt, resolution: gap.resolution,
+    }));
+  }
   const inputArtifact = await writeCvAuditArtifact(uid, workspaceId, {
     id: input.stageRunId,
     relativePath: `${base}-input.json`,
@@ -84,6 +92,12 @@ export async function recordCvPipelineStage(
   const db = getFirestore();
   await db.runTransaction(async tx => {
     const latest = await tx.get(workspace);
+    if (input.usageEventId) {
+      const recordedUsage = await tx.get(workspace.collection('tokenUsage').doc(input.usageEventId));
+      if (!recordedUsage.exists) {
+        throw new HttpsError('failed-precondition', 'Recorded provider token usage is missing.');
+      }
+    }
     if (latest.data()?.stage !== input.previousStage ||
         latest.data()?.stageVersion !== input.expectedStageVersion) {
       throw new HttpsError('failed-precondition', 'Application stage was updated elsewhere. Refresh before retrying.');
@@ -108,6 +122,7 @@ export async function recordCvPipelineStage(
         latestCvQualityPassed: false,
         latestScoredCvVersionId: null,
       } : {}),
+      ...(gapSummary !== null ? { gapSummary } : {}),
       updatedAt: FieldValue.serverTimestamp(),
     });
   });
