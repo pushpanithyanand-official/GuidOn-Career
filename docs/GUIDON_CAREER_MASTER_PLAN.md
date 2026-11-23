@@ -1003,3 +1003,85 @@ The repository now contains an owner-run, project-bound **Spark-compatible stati
 The development branch now supports a separate **Firebase Authentication-only smoke test** on Spark, explicitly enabled by `VITE_GUIDON_AUTH_PREVIEW_ENABLED=true` during owner-authorised build/deploy. It tests Google/email/password signup/login and sign-out using Firebase's web SDK **without** calling undeployed Cloud Functions, changing Firestore/Storage rules or collecting CV files. The script always forces `VITE_GUIDON_CORE_ENABLED=false`, and its default remains a static preview. This Auth-only upgrade is **not yet claimed to be deployed**, and the profile/backend phase remains incomplete.
 
 See [Hosting launch and Auth smoke test instructions](WEBAPP_HOSTING_LAUNCH.md). Next secure data milestone: separately designed and tested owner-scoped Firestore rules, followed by staged profile/job persistence or an approved Blaze Functions backend; no public test-mode database rules.
+
+
+---
+
+# Addendum v1.6 — Canonical Data Architecture, AI Efficiency and End-to-End Pipeline
+
+**Recorded:** 23 November 2026. **Append-only architectural baseline / pre-build gate.** Preserve all original Phases 0–9, Release A–D criteria, CV-first and strict one-page CV rules, Chrome extension constraints, Gmail capability A/B and previous Addenda. Architecture design decisions below require explicit security/technical acceptance **before** releasing client-writable private data.
+
+## 37. First-class architecture and data-model gate
+
+**GuidOn must have one coherent data model and one source of truth per entity.** All consumers (web, installable PWA, optional Chrome extension, future Android Career Browser, future authorised Gmail connectors) share the same Firebase identity and typed services for user-owned job, profile, CV and application records.
+
+Four distinct data/trust classes:
+1. **Public:** published product content and approved configuration only; never user CV/profile/contact or private job email content.
+2. **Controlled shared catalogue:** rights-permitted public job listings, source-version metadata and generic reusable JD requirements; ingestion-service writes only. **Publicly accessible source ≠ unlimited republication rights.**
+3. **User-private:** Career Intelligence Profile, original base CV, verified STAR/metrics, Answer Bank, private job captures, source observations, favourites, CV workspaces and approved versions, application/interview histories, preferences and email connection consent metadata. Owner and narrowly authorised service access.
+4. **Highly restricted internal:** OAuth tokens, provider/AI credentials, document scanning and server-side work queues, necessary encrypted email pointers, cost internals and audit logs. No browser or third-party connector direct access.
+
+**Canonical schema target:** one `users/{uid}` namespace with profile/current, drafts and immutable revisions; separate experience/education/evidence/answers; private saved jobs linked optionally to `jobCatalog`; CV workspaces and immutable versions; applications and append-only events/interviews; connections/usage/notifications. Large documents belong in private secured object storage once supported, not general Firestore job-card documents. Secrets belong only to managed server-side credentials.
+
+**Known migration risk:** Current development code has both Functions' `users/{uid}/...` and Spark prototype `sparkUsers/{uid}/...` collection paths, along with separate `savedJobs` and `manualJobs`. These are **not two permanent accepted data models**. Before live data writes, agree one target schema, typed repository adapter, legacy crosswalk, reversible migration, idempotent identifier mapping and full two-user privacy tests. Do not silently dual-write or silently copy another project's personal data.
+
+The underlying data model, access matrix and migration checklist are specified in [Canonical Database Model](DATABASE_CANONICAL_SCHEMA.md). These are proposed target contracts, **not claimed as already deployed schemas**.
+
+## 38. Unified job-source gateway and universal identifiers
+
+Every job enters through one standardised source observation. Sources in scope: user paste/URL and JD, Chrome extension DOM capture, future user-authorised Gmail job alerts/forwarding, permitted employer/ATS/provider feeds, recruiter-supplied links, later other authorised email systems and mobile Career Browser captures.
+
+**Intake:** owner/source authentication → source rights/provenance → typed extraction → deterministic cleaning → employer requisition/URL/hash deduplication → sharing classification → private job or approved shared catalogue → source-version history → user-personal Smart Sort, filters and favourites.
+
+One vacancy captured from several sources must yield **one saved user opportunity with multiple source references**, not multiple application timelines. Personal/forwarded email content remains private; a shared job catalogue must never expose recruiter conversations or the user's personal notes. Feeds must honour permissions and licensing; do not depend on unrestricted scraping.
+
+**Required IDs/references:** Auth `uid`; reusable `catalogJobId` when allowed; private `userJobId`; source observation/version; exact `jdVersionHash`; confirmed `profileRevisionId` and `evidenceId`; `workspaceId`, immutable `cvVersionId`; independent `applicationId` and append-only `eventId`. Explicit references link these, never infer ownership from names or URL text.
+
+## 39. Single job-to-CV-to-application processing pipeline
+
+`Job intake → clean/version JD → verify requirements → match latest confirmed profile/evidence → compute pre-CV Raw ATS & Recruiter Fit → concise gap review → user corrections/confirmed STAR → draft CV using saved base format and factual/creative writing option → actual one-page/no-table DOCX/PDF QA → independent post-CV Raw ATS & Recruiter Fit from visible exported content → user approval and version history → recommend CV → manual application → confirmed event timeline → future Gmail and Calendar signals → Dashboard.`
+
+**Every step has typed input/output, user/source ownership, status, timestamps, schema/rubric/prompt/engine versions, idempotency key, hash and traceable evidence references.** A downstream step can retry or resume only if its upstream approved snapshot is unchanged. Failed stages do not promote an unapproved score or CV version.
+
+**CV non-negotiables retained:** strict one-page CV; user-provided base template appearance preserved where technically feasible; no tables; accurate right-aligned dates and consistent left/right boundaries; readable font and maximum two rendered lines per STAR bullet; use hyphens sparingly in paragraph prose; separate key numbers/STAR evidence for each job and education entry; creative mode may strengthen truthful emphasis but never alter factual employment/education/eligibility claims. The post-CV dual scores must use **only facts visibly represented in the exact exported CV**, not hidden profile evidence. All prompt inputs, outputs, model tokens/costs, scores, gaps, user comments, QA and versions are saved in the private company/designation/location workspace.
+
+**Extension rule:** current-page autofill only; never automatically click Next, Continue, Apply or Submit. A filled form is not proof of submission. **Gmail rule:** Phase A imports job alerts; separately consented Phase B can propose application/interview updates later; offers, rejections and ambiguous same-employer matches require user confirmation.
+
+Detailed source and handoff graph: [Integrated Pipeline and Phase Gates](INTEGRATED_PIPELINE_AND_PHASE_GATES.md).
+
+## 40. AI token, latency and accuracy policies
+
+**Deterministic-first:** Use structured parsers, normalisation, exact keys, dedup, basic Smart Sort, keyword matching, Raw ATS calculation, Firestore writes, geometry QA, status and email rules without AI. Use compact/small structured-output models only for ambiguous JD/entity extraction or evidence interpretation, and higher-capability models selectively for grounded CV composition/complex review. No AI call on opening a dashboard, filtering, favouriting, toggling status or revisiting unchanged results.
+
+**Caching and invalidation:** Share generic JD analysis *only when licensing/privacy permit* and it contains no user data. Partition personal matching, gap, CV and recruiter-scoring caches by UID, confirmed profile revision, JD hash, scoring rubric/prompt/model version and selected verified evidence. Post-CV scoring and render QA bind to exact exported file hash. Changed inputs invalidate affected downstream results; unchanged stages are reused. Stable schema and prompt prefixes may benefit from provider prompt caching.
+
+**Token/cost ledger per request and CV version:** model/provider, input/cached/output tokens, latency, stage attempt, cost estimate, retry count, model/rubric version and user-triggered operation. Enforce configurable per-user/per-workspace budgets, timeouts/retry ceilings and cancellation; actual benchmarks determine numerical limits, not invented fixed promises. Keep provider keys off all clients.
+
+**Performance plan:** lightweight indexed cards and cursors, on-demand full JD reads, no broad live collection listeners, selective background heavy processing with persistent states, retries and progress. Measure p50/p95 latency, daily database reads/writes, storage/index cost, cache hit, token cost per CV, duplicate detection, extraction/recruiter matching accuracy and failed job rates. Target roughly immediate feedback for light actions and a few seconds for routine intake under normal benchmark conditions; heavy CV work shows progress, not false immediate completion.
+
+**Evidence and accuracy:** source-backed requirements, user-confirmed numerical/STAR evidence, explainable score formulas, version-linked claims and independently inspected rendered files. Zero tolerated cross-user exposure, fabricated qualifications/metrics, automatically submitted applications and unconfirmed consequential Gmail statuses.
+
+Detailed engineering policies: [Architecture, Connections and AI Efficiency](ARCHITECTURE_DATA_AI_EFFICIENCY_SPEC.md).
+
+## 41. Secure lifecycle, release criteria and staging
+
+**Security:** least privilege, Firebase Auth `uid`, strict Firestore rules and server-side checks, no secrets/refresh tokens in public configuration, encrypted restricted connectors, idempotency, stale-write concurrency controls, privacy-safe logs, retention, export and deletion. Append-only histories provide accountability during the user's account lifetime; they cannot override lawful personal-data erasure requirements.
+
+**Pre-implementation architecture gates:** A) canonical schema/migration and source ownership; B) privacy/consent/read-write matrix and emulator cross-user tests; C) typed module contracts with one application/event authority; D) AI token/accuracy/real-document benchmarks; E) monitored staging release and rollback. A failed gate blocks live private data or verified AI outputs.
+
+**Release pacing:** architecture gate → secure user profile/jobs on Spark → CV-first scanning/extraction via appropriate authorised backend → multi-source discovery → JD matching/gaps → strict real CV rendering/dual scoring → complete application tracking → Chrome extension/mobile assistant → optional Gmail alerts → later Gmail interview intelligence → scalability/100+ user production acceptance.
+
+**Infrastructure truth:** Firebase Hosting `guidon-career-fcda2.web.app` and Google sign-in were validated by the owner on mobile; this does **not** imply that Firestore private persistence, Functions, AI models, CV uploads, Chrome extension or Gmail are live. On Spark, the present Functions-based core cannot be deployed as-is. Proposed Spark client-access rules are not production approved, particularly where a browser could modify purportedly trusted score fields. No automatic deployment or permission expansion is authorised by this document.
+
+**UI/UX constraint:** the final designer may replace screens while all clients retain the same data contracts, statuses, provenance, security and feature acceptance. A successful component test is not the same as the original Phase 0–9 acceptance sign-off.
+
+## 42. Architecture references and decision checklist
+
+- [Database Canonical Schema, Access Matrix and Migration](DATABASE_CANONICAL_SCHEMA.md)
+- [Architecture, AI Token Efficiency and Reliability](ARCHITECTURE_DATA_AI_EFFICIENCY_SPEC.md)
+- [Multi-Source Pipeline, Integrations and Release Phases](INTEGRATED_PIPELINE_AND_PHASE_GATES.md)
+- [Source Plan Completion Audit](MASTER_PLAN_STAGE_AUDIT.md)
+- [Strict CV Builder Specification](CV_BUILDER_STRICT_SPEC.md)
+- [Firebase Hosting / Spark Release Constraints](FIREBASE_PROJECT_SETUP.md)
+
+**Status:** All architecture requirements from the latest discussion are now added to the development backlog and baseline spec, but implementation and release gates remain separately tracked.
