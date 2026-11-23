@@ -51,6 +51,48 @@ export const projectSchema = z.object({
 }).strict();
 
 export const careerProfileSchema = z.object({
+  legalName: short.optional(),
+  contact: z.object({
+    email: z.string().trim().email().max(254).optional(),
+    phone: z.string().trim().max(40).optional(),
+    city: short.optional(),
+    country: short.optional(),
+  }).strict().optional(),
+  certifications: z.array(z.object({
+    id: z.string().uuid(),
+    name: short,
+    issuer: short.optional(),
+    issueDate: date.optional(),
+    expiryDate: date.optional(),
+  }).strict()).max(60).default([]),
+  languages: z.array(z.object({
+    name: short,
+    level: z.enum(['basic', 'conversational', 'professional', 'fluent', 'native', 'unspecified']).default('unspecified'),
+  }).strict()).max(30).default([]),
+  workEligibility: z.array(z.object({
+    country: z.string().trim().min(2).max(120),
+    authorisedNow: z.enum(['yes', 'no', 'unknown']),
+    sponsorshipNow: z.enum(['yes', 'no', 'unknown']),
+    sponsorshipFuture: z.enum(['yes', 'no', 'unknown']),
+    permitType: short.optional(),
+    expiryDate: date.optional(),
+    lastConfirmedOn: date.optional(),
+  }).strict()).max(20).default([]),
+  careerPreferences: z.object({
+    workModes: z.array(z.enum(['remote', 'hybrid', 'onsite'])).max(3).default([]),
+    relocation: z.enum(['yes', 'no', 'discuss', 'unknown']).default('unknown'),
+    availabilityDate: date.optional(),
+    noticePeriod: short.optional(),
+    salaryCurrency: z.string().trim().regex(/^[A-Z]{3}$/).optional(),
+    salaryMinimum: z.number().finite().nonnegative().max(100000000).optional(),
+    salaryMaximum: z.number().finite().nonnegative().max(100000000).optional(),
+  }).strict().optional(),
+  achievements: z.array(z.object({
+    id: z.string().uuid(),
+    statement: z.string().trim().min(1).max(1000),
+    evidenceNote: z.string().trim().max(1200).optional(),
+  }).strict()).max(100).default([]),
+
   displayName: short.optional(),
   headline: z.string().trim().max(300).optional(),
   professionalSummary: z.string().trim().max(4000).optional(),
@@ -69,7 +111,18 @@ export const confirmProfileInput = z.object({
   profile: careerProfileSchema,
   // Explicit, user-triggered confirmation. Extraction output by itself is never verified.
   userConfirmed: z.literal(true),
+  // Null for first confirmation. Later edits must provide the current revision.
+  expectedRevisionId: z.string().regex(/^[A-Za-z0-9_-]{10,64}$/).nullable().optional(),
   sourceCvId: z.string().regex(/^[A-Za-z0-9_-]{10,64}$/).nullable().optional(),
+}).strict();
+
+export const saveProfileDraftInput = z.object({
+  profile: careerProfileSchema,
+  sourceCvId: z.string().regex(/^[A-Za-z0-9_-]{10,64}$/).nullable().optional(),
+}).strict();
+
+export const profileHistoryInput = z.object({
+  limit: z.number().int().min(1).max(20).default(10),
 }).strict();
 
 export const completeCvInput = z.object({
