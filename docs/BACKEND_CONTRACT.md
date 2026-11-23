@@ -123,12 +123,15 @@ See [strict CV builder specifications](CV_BUILDER_STRICT_SPEC.md), which are als
 | Callable name | Important input | Output / purpose |
 | --- | --- | --- |
 | `createMyCvWorkspace` | `{clientRequestId:UUID,company,designation,location,originalJd,sourceUrl?,baseCvId?}` | Creates one private immutable job folder and writes original JD |
+| `previewMyJdReview` | `{workspaceId:UUID}` | Returns conservative cleanup preview without running AI; original preserved |
+| `confirmMyJdReview` | `{workspaceId,reviewId,expectedStageVersion,cleanedText,requirements,keywords,confirmedByUser:true}` | Validates exact JD quotes and advances into profile matching |
 | `getMyCvWorkspaceReport` | `{workspaceId:UUID}` | Returns stage, gaps when available, pre/post score snapshots, token totals, model events and private artifact manifest |
 | `readMyCvAuditArtifact` | `{workspaceId:UUID,artifactId:UUID}` | Reads a small JSON/text file only for the authenticated folder owner; verifies SHA-256 before returning |
 | `submitMyCvGapFeedback` | `{workspaceId,feedbackId,expectedStageVersion,feedback:{acknowledged:true,comment,userRequestedChanges,confirmedFactIds}}` | Saves the user comment in the named folder and advances only from `awaiting_user_feedback` |
 | `requestMyCvRevision` | `{workspaceId,revisionRequestId,expectedStageVersion,comment}` | Immutable revision request for a CV in a revisable stage; never overwrites prior versions |
+| `approveMyCvVersion` | `{workspaceId,approvalId,cvVersionId,expectedStageVersion,userConfirmed:true}` | Final approval of that exact QA-passed, post-scored version by authenticated candidate |
 
-**Internal backend-only APIs:** `recordCvPipelineStage`, `recordCvScoreSnapshot`, `writeCvAuditArtifact`, `recordCvModelUsage`; these are deliberately **not exported as client-callable functions**, preventing clients from inventing token usage or recruiting scores.
+**Internal backend-only APIs:** `recordCvPipelineStage`, `recordCvScoreSnapshot`, `registerRenderedCvVersion`, `writeCvAuditArtifact`, `recordCvModelUsage`; these are deliberately **not exported as client-callable functions**, preventing clients from inventing token usage or recruiting scores.
 
 ### Job folder example
 
@@ -163,5 +166,20 @@ Each provider call records `provider`, `model`, `stage`, `requestId`, `measureme
 ### UI/UX handoff
 
 The designer needs only these service states and payloads. Profile UI, JD review, gap popup, token meter, score widgets, document preview, compare-versions view and download presentation may all be redesigned. The backend enforces ownership, evidence verification, mandatory stage order, score provenance, audit storage and rendered one-page quality gates.
+
+
+### Version registration and final approval contract
+
+The trusted rendering worker registers an immutable `cvVersions/{cvVersionId}` record only after receiving actual DOCX and PDF bytes and extracted text. Both files must have valid headers and remain under the conservative 2.5 MB parsing target. It saves `cv-version-<uuid>.docx`, `.pdf`, `.txt` and `rendered-qa-<uuid>.json` in the private job folder.
+
+The post-CV scoring routine refuses to score an unsaved or QA-failed version, or text whose SHA-256 differs from the saved extracted CV text. A stale score cannot approve a newer version. The separate `approveMyCvVersion` callable requires candidate confirmation and matching version, score and QA state.
+
+### Token-cost pagination / aggregates
+
+The `getMyCvWorkspaceReport` tokenCounter is derived from transactional all-history aggregates, **not just the last 250 stored events**. `tokenCounterByVersion` separates pre-CV from individual CV versions, and individual model calls retain cached/reasoning tokens, outcome and pricing provenance. The recent-event list is capped and marked truncated where applicable; a future paginated history/export API is required for a full historical UI.
+
+### Versioned AI instructions
+
+Task instructions for JD extraction, evidence matching, concise gap analysis, evidence-only one-page drafting and objective critique are defined in `functions/src/cv-prompts.ts`. The JD and uploaded CV are explicitly treated as untrusted data. They are not a running AI provider integration. Model scoring outputs are not accepted as final raw ATS or recruiter scores; independent backend calculations are authoritative.
 
 The current work is a **foundation**, not a completed live AI-to-DOCX workflow. Cloud storage enablement, provider integrations, secure binary download and real user CV template acceptance tests remain future implementation gates.
