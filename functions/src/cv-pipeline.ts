@@ -245,11 +245,17 @@ export async function recordCvScoreSnapshot(uid: string, workspaceId: string,
     }
   }
   if (input.timing === 'post_cv') {
-    await workspace.update({
-      latestCvQualityPassed: quality?.passed === true,
-      latestScoredCvVersionId: input.cvVersionId,
-      latestPostCvScoreSnapshotId: input.snapshotId,
-      updatedAt: FieldValue.serverTimestamp(),
+    await getFirestore().runTransaction(async tx => {
+      const latest = await tx.get(workspace);
+      if (latest.data()?.latestRenderedCvVersionId !== input.cvVersionId) {
+        throw new HttpsError('failed-precondition', 'A newer CV version has been rendered. Score that version instead.');
+      }
+      tx.update(workspace, {
+        latestCvQualityPassed: quality?.passed === true,
+        latestScoredCvVersionId: input.cvVersionId,
+        latestPostCvScoreSnapshotId: input.snapshotId,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
     });
   }
   return { snapshotId: input.snapshotId, rawAts: ats, recruiterFit: recruiter,
