@@ -1,7 +1,219 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Phase 0: no client access until ownership rules and tests exist.
+    // Existing Functions/Admin SDK model remains closed to untrusted clients.
+    // Spark operates in a separate, explicitly named namespace so future
+    // server-side migration cannot accidentally treat these as verified uploads.
+    function owner(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+    function stamped(data, uid) {
+      return data.ownerUid == uid && data.updatedAt == request.time;
+    }
+    function boundedProfile(profile) {
+      return profile is map
+        && profile.keys().hasOnly([
+          'displayName','legalName','headline','professionalSummary','contact',
+          'skills','targetRoles','targetLocations','experience','education',
+          'certifications','projects','workEligibility','careerPreferences'
+        ])
+        && profile.get('skills', []) is list && profile.get('skills', []).size() <= 120
+        && profile.get('targetRoles', []) is list && profile.get('targetRoles', []).size() <= 30
+        && profile.get('targetLocations', []) is list && profile.get('targetLocations', []).size() <= 30
+        && profile.get('experience', []) is list && profile.get('experience', []).size() <= 35
+        && profile.get('education', []) is list && profile.get('education', []).size() <= 25;
+    }
+    function validJob(data, uid) {
+      return stamped(data, uid)
+        && data.keys().hasOnly([
+          'ownerUid','jobId','company','designation','location','sourceUrl',
+          'originalJd','summary','source','department','skills','status',
+          'favorite','version','createdAt','updatedAt'
+        ])
+        && data.company is string && data.company.size() > 0 && data.company.size() <= 180
+        && data.designation is string && data.designation.size() > 0 && data.designation.size() <= 180
+        && data.location is string && data.location.size() > 0 && data.location.size() <= 180
+        && data.originalJd is string && data.originalJd.size() <= 45000
+        && data.sourceUrl is string && data.sourceUrl.size() <= 2000
+        && data.favorite is bool && data.version is int
+        && data.status in [
+          'discovered','interested','cv_preparing','cv_prepared',
+          'applied','applied_connected','rejected','not_interested','snoozed'
+        ];
+    }
+    function applicationRef(uid, jobId) {
+      return /databases/$(database)/documents/sparkUsers/$(uid)/applications/$(jobId);
+    }
+    function eventRef(uid, applicationId, eventId) {
+      return /databases/$(database)/documents/sparkUsers/$(uid)/applications/$(applicationId)/events/$(eventId);
+    }
+    function statusSupported(status) {
+      return status in [
+        'preparing','submitted','in_review','assessment_requested',
+        'interview_invited','interview_scheduled','interview_completed',
+        'offer_received','rejected','withdrawn'
+      ];
+    }
+    function hasConfirmedEvent(uid, appData) {
+      return appData.lastEventId is string
+        && appData.lastEventId.size() > 0
+        && existsAfter(eventRef(uid, appData.applicationId, appData.lastEventId))
+        && getAfter(eventRef(uid, appData.applicationId, appData.lastEventId)).data.status == appData.status
+        && getAfter(eventRef(uid, appData.applicationId, appData.lastEventId)).data.confirmedByUser == true;
+    }
+    function validApplication(data, uid) {
+      return stamped(data, uid)
+        && data.keys().hasOnly([
+          'ownerUid','applicationId','jobId','company','designation','location',
+          'sourceUrl','status','version','submittedOn','cvWorkspaceId',
+          'cvVersionId','employerApplicationId','note','latestNote',
+          'nextInterview','lastEventId','createdAt','updatedAt'
+        ])
+        && data.applicationId == data.jobId
+        && data.company is string && data.company.size() > 0 && data.company.size() <= 180
+        && data.designation is string && data.designation.size() > 0 && data.designation.size() <= 180
+        && data.location is string && data.location.size() <= 180
+        && data.version is int && statusSupported(data.status);
+    }
+
+    match /sparkUsers/{uid} {
+      allow read, write: if false; // No free-form account documents.
+
+      match /career/{record} {
+        allow get, list: if owner(uid) && record in ['draft', 'current'];
+        allow create, update: if owner(uid)
+          && record in ['draft', 'current']
+          && request.resource.data.keys().hasOnly([
+            'ownerUid','profile','revisionId','updatedAt','confirmedByUser'
+          ])
+          && stamped(request.resource.data, uid)
+          && boundedProfile(request.resource.data.profile)
+          && (record == 'draft' || (
+            request.resource.data.confirmedByUser == true
+            && request.resource.data.revisionId is string
+            && request.resource.data.revisionId.size() > 0
+            && existsAfter(
+              /databases/$(database)/documents/sparkUsers/$(uid)/careerRevisions/$(request.resource.data.revisionId)
+            )
+          ));
+        allow delete: if false;
+      }
+      match /careerRevisions/{revisionId} {
+        allow get, list: if owner(uid);
+        allow create: if owner(uid)
+          && request.resource.data.keys().hasOnly([
+            'ownerUid','revisionId','profile','confirmedByUser','previousRevisionId','createdAt'
+          ])
+          && request.resource.data.ownerUid == uid
+          && request.resource.data.revisionId == revisionId
+          && request.resource.data.confirmedByUser == true
+          && request.resource.data.createdAt == request.time
+          && boundedProfile(request.resource.data.profile);
+        allow update, delete: if false;
+      }
+      match /jobs/{jobId} {
+        allow get, list: if owner(uid);
+        allow create: if owner(uid) && validJob(request.resource.data, uid)
+          && request.resource.data.jobId == jobId
+          && request.resource.data.version == 0
+          && request.resource.data.status == 'discovered'
+          && request.resource.data.createdAt == request.time;
+        allow update: if owner(uid) && validJob(request.resource.data, uid)
+          && resource.data.ownerUid == uid
+          && request.resource.data.jobId == resource.data.jobId
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.version == resource.data.version + 1
+          && (
+            !(request.resource.data.status in ['applied','applied_connected','rejected'])
+            || (
+              existsAfter(applicationRef(uid, jobId))
+              && (
+                (request.resource.data.status == 'rejected'
+                  && getAfter(applicationRef(uid, jobId)).data.status == 'rejected')
+                || (request.resource.data.status in ['applied','applied_connected']
+                  && getAfter(applicationRef(uid, jobId)).data.status in [
+                    'submitted','in_review','assessment_requested','interview_invited',
+                    'interview_scheduled','interview_completed','offer_received'
+                  ])
+              )
+            )
+          );
+        allow delete: if false; // Planned privacy/export deletion requires reviewed workflow.
+      }
+      match /applications/{appId} {
+        allow get, list: if owner(uid);
+        allow create: if owner(uid) && validApplication(request.resource.data, uid)
+          && request.resource.data.applicationId == appId
+          && request.resource.data.version == 1
+          && request.resource.data.status in ['preparing','submitted']
+          && request.resource.data.createdAt == request.time
+          && exists(/databases/$(database)/documents/sparkUsers/$(uid)/jobs/$(appId))
+          && hasConfirmedEvent(uid, request.resource.data);
+        allow update: if owner(uid) && validApplication(request.resource.data, uid)
+          && resource.data.ownerUid == uid
+          && request.resource.data.applicationId == resource.data.applicationId
+          && request.resource.data.jobId == resource.data.jobId
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.version == resource.data.version + 1
+          && request.resource.data.lastEventId != resource.data.lastEventId
+          && hasConfirmedEvent(uid, request.resource.data);
+        allow delete: if false;
+
+        match /events/{eventId} {
+          allow get, list: if owner(uid);
+          allow create: if owner(uid)
+            && request.resource.data.keys().hasOnly([
+              'ownerUid','eventId','applicationId','status','previousStatus',
+              'source','confirmedByUser','note','interview','at'
+            ])
+            && request.resource.data.ownerUid == uid
+            && request.resource.data.eventId == eventId
+            && request.resource.data.applicationId == appId
+            && request.resource.data.source == 'user'
+            && request.resource.data.confirmedByUser == true
+            && statusSupported(request.resource.data.status)
+            && request.resource.data.at == request.time
+            && existsAfter(applicationRef(uid, appId))
+            && getAfter(applicationRef(uid, appId)).data.lastEventId == eventId;
+          allow update, delete: if false; // Append-only provenance.
+        }
+      }
+      match /cvWorkspaces/{cvId} {
+        allow get, list: if owner(uid);
+        allow create: if owner(uid)
+          && stamped(request.resource.data, uid)
+          && request.resource.data.workspaceId == cvId
+          && request.resource.data.stage == 'jd_review'
+          && request.resource.data.stageVersion == 0
+          && request.resource.data.createdAt == request.time
+          && request.resource.data.originalJd is string
+          && request.resource.data.originalJd.size() >= 50
+          && request.resource.data.originalJd.size() <= 45000
+          && request.resource.data.keys().hasOnly([
+            'ownerUid','workspaceId','jobId','company','designation','location',
+            'folderName','sourceUrl','originalJd','cleanedText','requirements',
+            'keywords','stage','stageVersion','generationMode','preCvScore',
+            'gaps','createdAt','updatedAt'
+          ]);
+        allow update: if owner(uid)
+          && stamped(request.resource.data, uid)
+          && resource.data.ownerUid == uid
+          && request.resource.data.workspaceId == resource.data.workspaceId
+          && request.resource.data.jobId == resource.data.jobId
+          && request.resource.data.originalJd == resource.data.originalJd
+          && request.resource.data.createdAt == resource.data.createdAt
+          && request.resource.data.stageVersion == resource.data.stageVersion + 1
+          && request.resource.data.keys().hasOnly([
+            'ownerUid','workspaceId','jobId','company','designation','location',
+            'folderName','sourceUrl','originalJd','cleanedText','requirements',
+            'keywords','stage','stageVersion','generationMode','preCvScore',
+            'gaps','createdAt','updatedAt'
+          ])
+          && request.resource.data.stage in ['jd_review','profile_match'];
+        allow delete: if false;
+      }
+    }
+
     match /{document=**} {
       allow read, write: if false;
     }

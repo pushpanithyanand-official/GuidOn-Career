@@ -1,0 +1,27 @@
+{
+  "name": "guidon-career-backend",
+  "private": true,
+  "version": "0.1.0",
+  "main": "lib/index.js",
+  "engines": {
+    "node": "22"
+  },
+  "scripts": {
+    "build": "tsc",
+    "check": "tsc --noEmit",
+    "test": "npm run build && node --test test/contracts.test.cjs test/cv-workflow.test.cjs test/cv-audit.test.cjs test/cv-matching.test.cjs test/cv-versions.test.cjs test/cv-prompts.test.cjs test/job-discovery.test.cjs test/cv-generation-mode.test.cjs test/assistant-bridge.test.cjs test/application-contracts.test.cjs",
+    "test:security": "node --test test/security-emulator.test.cjs",
+    "test:api": "node --test test/api-emulator.test.cjs"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.0.0",
+    "firebase-functions": "^6.4.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "typescript": "~5.9.2",
+    "@firebase/rules-unit-testing": "^5.0.0",
+    "firebase": "^12.10.0"
+  }
+}

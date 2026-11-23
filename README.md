@@ -41,3 +41,101 @@ Phase 3: personal dashboard and PWA installability; Releases B/C subsequently ad
 - External applications and final submissions always remain user-controlled.
 
 See [Phase 0 checklist](docs/PHASE_0_CHECKLIST.md).
+
+
+## Backend-first development track
+
+GuidOn Career now prioritises **services, private multi-user data, APIs, CV storage/extraction architecture and end-to-end reliability**. The current React shell is temporary; the UI/UX designer can replace it without changing the backend.
+
+The backend lives under `functions/` and has its own Node.js 22 / TypeScript build. See [backend contract and independent design handoff](docs/BACKEND_CONTRACT.md).
+
+```bash
+cd functions
+npm install
+npm run check
+npm test
+```
+
+The Firebase CLI configuration includes local Auth, Firestore, Functions and Storage emulators. It does **not** configure a live cloud project, secret or automatic deployment. `firestore.rules` and `storage.rules` remain deny-all; `storage.uploads.rules` is a non-deployed candidate for later security testing.
+
+### Backend build priority
+
+1. Secure authentication and private per-user account bootstrap.
+2. Versioned Career Intelligence Profile and immutable evidence corrections.
+3. CV upload intents, private original files, safe extraction/processing pipeline and provenance.
+4. Canonical jobs, user-specific saved opportunities and application statuses.
+5. Document-generation jobs, per-user version storage and async processing controls.
+6. Profile matching and approved Answer Bank APIs.
+7. Privacy, export/deletion, abuse controls, emulator tests, monitoring and costs.
+
+No application screen or visual component in the current starter is the source of truth for future product design.
+
+### Multi-user emulator verification
+
+The CI security job builds the backend and starts Firebase Auth, Firestore, Storage and Functions emulators using the fake `demo-guidon-career-security` project. It runs private rules and authenticated two-account API tests; no cloud project or personal CV is needed.
+
+To reproduce locally, install Node.js 22, Java 21 and Firebase CLI, then run:
+
+```bash
+npm install --prefix functions
+npm run build --prefix functions
+firebase emulators:exec --only auth,firestore,functions,storage --project demo-guidon-career-security "npm run test:security --prefix functions && npm run test:api --prefix functions"
+```
+
+**Safety:** `CV_UPLOADS_ENABLED` is disabled by default; do not set it to true unless isolated cloud storage, security tests, scanning, retention and explicit consent are ready. The current production-bound `storage.rules` remains deny-all.
+
+
+### New job discovery and creative CV contracts
+
+The draft backend includes per-user favourites, application milestones (CV Preparing, CV Prepared, Applied, Applied + Connected, Rejected, Not Interested), status-event history, Smart Sort and the screenshot-inspired Filter & Sort API. It also includes an opt-in **Think Creatively** drafting mode, which changes truthful wording and emphasis but never alters unverified facts, real employers or official designations. Generated CVs must be single-column with **no tables**. The UI is intentionally left unchanged for the UI/UX designer.
+
+Read [Job Discovery and Creative Mode](docs/JOB_DISCOVERY_CREATIVE_MODE.md) and [Strict CV Builder Specification](docs/CV_BUILDER_STRICT_SPEC.md). Discovery ingestion, scalable search indexing and live CV AI generation are not implemented or deployed.
+
+## Master-plan acceptance audit and universal web app
+
+The source `GUIDON_CAREER_MASTER_PLAN (1).md` was audited against the draft GitHub backend. **None of Phases 0–9 or Releases A–E have reached all their user-facing exit criteria.** Several foundations and emulator tests have passed, but real authentication, CV-first AI extraction, an actual one-page CV generation run, full application tracking, and hosted deployment remain pending.
+
+- [Phase-by-phase acceptance audit](docs/MASTER_PLAN_STAGE_AUDIT.md)
+- [Manual Firebase web.app / PWA hosting setup](docs/WEBAPP_HOSTING_LAUNCH.md)
+- [Chrome extension integration and legacy-source inspection](docs/CHROME_EXTENSION_INTEGRATION.md)
+- [Strict staged CV-engine requirements](docs/CV_BUILDER_STRICT_SPEC.md)
+
+**Canonical website:** one verified Firebase Hosting `*.web.app` URL for desktop, mobile browser and installable PWA after an independently owned project has been provisioned and the manual Hosting-only workflow has run. **No real live URL has yet been verified.** The extension is an optional separately installed desktop companion using the same secure APIs; the PWA cannot inspect arbitrary external sites.
+
+The existing Manifest V3 autofill source was located in the legacy repository, but has **not** been ported to GuidOn. Its Next/Continue click automation and candidate-specific integration must be removed/replaced before release. No extension can automatically navigate or submit an employer application.
+
+
+## Future Gmail integration — separate from Chrome extension
+
+The user-approved roadmap contains two Gmail capabilities: (1) **job-alert discovery import** (planned) and (2) **automated application and interview tracking** (future), including receipt/recruiter matching, assessments, interview scheduling/rescheduling, user-confirmed offers/rejections, notifications and eventual Calendar/analytics. Neither has been connected or implemented.
+
+Read [Gmail Integration and Application & Interview Tracking](docs/GMAIL_INTEGRATION_APPLICATION_TRACKING.md), [Master Plan Addendum v1.4](docs/GUIDON_CAREER_MASTER_PLAN.md) and the [phase acceptance audit](docs/MASTER_PLAN_STAGE_AUDIT.md). The existing Chrome extension is still a separate migration; it will share the same application IDs, history, CVs and user profile. **No extension auto-Next/Continue/Submit is permitted.**
+
+
+## Core-platform implementation update — 23 November 2026
+
+**User-supplied project IDs:** Firebase `guidon-career-fcda2` (intended Auth/Hosting/Firestore/Functions) and separate GCP `guidon-career` (possible future worker compute only with explicit IAM). These are **not** interchangeable. See [Setup](docs/FIREBASE_PROJECT_SETUP.md).
+
+The draft branch includes live-code React pages behind Firebase Auth: Career profile manual drafts/confirmation, private job discovery and favourites, manual JD review, the job-specific CV workspace, application creation, typed event history and interview status updates. The deterministic evidence-only one-page DOCX/PDF worker produces real files in tests, but is **not yet connected to an AI provider or hosted CV-generation API**, and it cannot preserve an uploaded base CV's layout.
+
+The real Firebase Web App config, authorised Google/email providers, Firestore/Hosting services and protected deploy identity still need owner-side provisioning. `VITE_GUIDON_CORE_ENABLED=false` prevents pretending that static Hosting alone is a functioning private application. **No production deployment, Gmail connection or CV upload has been enabled.**
+
+Run CI and review the [phase audit](docs/MASTER_PLAN_STAGE_AUDIT.md) before manually authorising the [Hosting](.github/workflows/deploy-hosting.yml) or [Functions](.github/workflows/deploy-core-backend.yml) workflow.
+
+
+### Firebase Web App registration confirmed (23 November 2026)
+
+The owner supplied the public SDK `firebaseConfig` for `guidon-career-fcda2`. Its browser identifiers are now in `src/firebase-web-config.ts`; GitHub environment variables are **not needed** for these public values. `src/firebase.ts` validates the project ID/App ID/Auth domain, and the Hosting workflow builds a safe **Spark preview** with private APIs disabled. The site is **not yet deployed**, and full account/job/CV workflows still require server-side backend availability. Next owner action: enable Google and Email/Password under Firebase Authentication, then configure standard Hosting.
+
+
+## Architecture freeze before additional feature implementation
+
+**New documentation, 23 November 2026:** The master plan has an **append-only Addendum v1.6** establishing the database/security classification, multi-source job intake pipeline, AI token/caching/latency controls and phased implementation gates. This is **planning and consistency work**, not a live Firestore migration.
+
+Read in this order:
+1. [Data architecture and AI efficiency](docs/ARCHITECTURE_DATA_AI_EFFICIENCY_SPEC.md) — public/shared/private/restricted classes, typed modules, caching, token budgets and correctness rules.
+2. [Canonical database schema and migration](docs/DATABASE_CANONICAL_SCHEMA.md) — identifiers, owner-access matrix, `users/` vs `sparkUsers/` conflict, safe cutover and rule review.
+3. [Multi-source intake, JD-to-CV-to-application pipeline](docs/INTEGRATED_PIPELINE_AND_PHASE_GATES.md) — source adapters, end-to-end versioned handoffs, original Phase 0–9 mapping and release gates.
+4. [Updated master plan](docs/GUIDON_CAREER_MASTER_PLAN.md) and [phase audit](docs/MASTER_PLAN_STAGE_AUDIT.md).
+
+The owner confirmed Firebase Hosting and Google sign-in on mobile. **Private Firestore profile/job persistence, generated CVs, email connectors and Chrome autofill remain not live.** Do not deploy the provisional `firestore.rules` or enable Functions-dependent pages based on Auth verification alone. Canonical schema decision and cross-user security tests are prerequisites. The separate Firebase project `guidon-career-fcda2` is still distinct from the optional `guidon-career` worker project.

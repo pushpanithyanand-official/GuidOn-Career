@@ -23,3 +23,63 @@ jobs:
         run: npm run check
       - name: Build
         run: npm run build
+
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: functions
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install backend dependencies
+        run: npm install --no-audit --no-fund
+      - name: Type check backend
+        run: npm run check
+      - name: Test backend contracts
+        run: npm test
+
+  security-rules:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Set up Java for Firebase emulators
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Install security test dependencies
+        run: npm install --prefix functions --no-audit --no-fund
+      - name: Build Firebase Functions for integration tests
+        run: npm run build --prefix functions
+      - name: Test private data rules and two-user callable APIs against local emulators
+        run: npx --yes firebase-tools@15.0.0 emulators:exec --only auth,firestore,functions,storage --project demo-guidon-career-security "npm run test:security --prefix functions && npm run test:api --prefix functions"
+
+  cv-render-qa:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: workers
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install real-document QA dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libreoffice-writer fonts-liberation fonts-crosextra-carlito
+          python -m pip install -r requirements.txt
+      - name: Test synthetic geometry and real one-page DOCX/PDF generation
+        run: python -m unittest -v test_cv_render_qa test_cv_generate

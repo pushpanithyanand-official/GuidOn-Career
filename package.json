@@ -8,12 +8,16 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "check": "tsc --noEmit",
-    "test": "node --test tests/*.test.mjs"
+    "test": "node --test tests/*.test.mjs",
+    "predev": "node scripts/generate-pwa-icons.mjs",
+    "prebuild": "node scripts/generate-pwa-icons.mjs",
+    "pretest": "node scripts/generate-pwa-icons.mjs"
   },
   "dependencies": {
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
-    "lucide-react": "^0.468.0"
+    "lucide-react": "^0.468.0",
+    "firebase": "^12.10.0"
   },
   "devDependencies": {
     "@types/react": "^19.1.0",

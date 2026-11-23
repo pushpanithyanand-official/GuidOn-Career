@@ -1,0 +1,36 @@
+rules_version = '2';
+// PHASE 2 CANDIDATE — NOT THE DEPLOYED DEFAULT RULES.
+// Only activate after emulator tests, quotas, malware screening and privacy review.
+// This rule requires permission for Storage rules to read the default Firestore database.
+service firebase.storage {
+  match /b/{bucket}/o {
+    function owns(uid) {
+      return request.auth != null && request.auth.uid == uid;
+    }
+
+    match /users/{uid}/base-cvs/{uploadId}/original {
+      allow get: if owns(uid)
+        && firestore.exists(/databases/(default)/documents/users/$(uid)/baseCvs/$(uploadId));
+
+      allow create: if owns(uid)
+        && resource == null
+        && request.resource.size > 0
+        && request.resource.size <= 10 * 1024 * 1024
+        && (
+          request.resource.contentType == 'application/pdf' ||
+          request.resource.contentType == 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+        && firestore.exists(/databases/(default)/documents/users/$(uid)/baseCvs/$(uploadId))
+        && firestore.get(/databases/(default)/documents/users/$(uid)/baseCvs/$(uploadId)).data.status == 'awaiting_upload'
+        && request.time < firestore.get(/databases/(default)/documents/users/$(uid)/baseCvs/$(uploadId)).data.expiresAt
+        && firestore.get(/databases/(default)/documents/users/$(uid)/baseCvs/$(uploadId)).data.mimeType == request.resource.contentType
+        && firestore.get(/databases/(default)/documents/users/$(uid)/baseCvs/$(uploadId)).data.sizeBytes == request.resource.size;
+
+      allow list, update, delete: if false;
+    }
+
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}

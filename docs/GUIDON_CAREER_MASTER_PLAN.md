@@ -726,3 +726,362 @@ Improve supported-platform coverage, privacy governance, reliability, cost contr
 - Chrome extension availability on mobile browsers: https://support.google.com/chrome_webstore/answer/1698338?hl=en
 
 **Guiding rule:** The first released GuidOn Career must let an ordinary new user complete the end-to-end job application preparation and tracking journey. The optional companion experiences should make that journey easier, not become prerequisites for using the product.
+
+---
+
+# Addendum v1.2 — Mandatory Staged CV Builder, Dual Scoring, and Complete Job Audit
+
+**Added:** 23 November 2026  
+**Change approach:** Append-only, without deleting or superseding Sections 1–18 or Addendum v1.1.  
+**Detailed specification:** [Strict CV Builder Engineering Specification](CV_BUILDER_STRICT_SPEC.md).
+
+## 19. Staged CV building is a mandatory workflow
+
+1. **Understand and clean the selected JD** without inventing or silently dropping requirements; retain unchanged original and cleaned JD plus provenance.
+2. **Match a user-verified Career Intelligence Profile** to the JD, linking every relevant experience, qualification, achievement and STAR evidence record.
+3. **Show both preliminary scores and concise gaps** before CV generation: Raw ATS distinct JD keyword coverage and a separate evidence-backed Recruiter Fit rubric; gap prompts must be short and actionable.
+4. **Wait for the user's acknowledgement, comments and corrections.** Material new profile facts require explicit verification and matching/scoring updates before generation.
+5. **Generate a truthful tailored CV** using the selected uploaded base CV format as closely as practical, with complete natural STAR bullets and separately verified metrics.
+6. **Render and inspect the final candidate document.** Exactly one page is mandatory; alignment, date anchors, font size, margins, output text and line lengths must pass automated checks and human review.
+7. **Recalculate both scores against the generated CV**, showing matched/missing keywords, recruiter evidence, gaps and change from pre-CV scores.
+8. **Support user-requested rewrites/reruns**, preserving every generated CV version, user comment, score snapshot, model usage and audit trail. Do not overwrite earlier attempts.
+
+## 20. Strict layout and integrity controls
+
+- **Exactly one rendered page**: two pages is not a valid final output; if necessary, propose evidence-grounded content prioritisation rather than silently shrinking text below readability thresholds.
+- **Consistent left/right alignment**: section and role headings align on the left; dates use consistent right-aligned positions; measure visible PDF coordinates and fail if alignment deviates beyond the specified tolerance.
+- **Base CV formatting**: retain heading hierarchy, type, visual spacing and layout where feasible; if source formatting is incompatible with ATS or one-page constraints, require controlled fallback review.
+- **STAR and key results**: no fabricated claims; natural action/result bullets supported by Situation, Task, Action, Result records and confirmed numerical achievements; individual bullets should not exceed two rendered lines.
+- **Writing style**: avoid excessive hyphens in narrative text; prefer colons, semicolons and commas; reserve dashes for headings or legitimate identifiers and dates.
+- **Readable parsing**: prioritise simple single-column structure, minimum 10 pt body text, sensible margins, actual text extraction, no misleading hidden keyword stuffing.
+
+## 21. Career profile data extension
+
+For **each** job and education entry, retain independently editable, versioned:
+
+- Basic job or institution details and normal responsibilities.
+- **Key numbers**: numeric value, measurement/unit, timeframe, context, evidence source and user-verification state.
+- **STAR stories**: Situation, Task, Action, Result, linked verified metric IDs and source/confirmation state.
+- Incomplete extracted stories remain unconfirmed until the user supplies or verifies missing facts; confirmation must not silently extend across another employer or qualification.
+
+## 22. Raw ATS, Recruiter Fit and comparisons
+
+- **Raw ATS Keyword Coverage**: number of distinct *JD-grounded relevant* phrases present divided by total distinct relevant phrases, multiplied by 100; duplicates and excessive repetition never increase the score. Record exact matching/missing terms and methodology.
+- **Recruiter Fit**: independent qualitative and evidence-based rubric weighted for relevant experience, achievements, skills, seniority, qualifications and work eligibility. Unknown evidence is clearly labelled rather than assumed; the result is GuidOn's own decision support, not an employer rating.
+- Calculate both scores **before generation** from confirmed profile evidence and **after each generation** from the actual CV, including each revised version; store per-category reasoning, matched/missing terms, gaps and history.
+- No score should be presented as a hiring probability, universal ATS score or guarantee of a shortlist.
+
+## 23. Every application gets a complete private folder and usage ledger
+
+Folder naming rule: **Company Name - Designation - Location**, with an immutable internal UUID suffix to prevent collision or accidental overwrites.
+
+Retain in the user's private folder: original/cleaned JD, extraction/analysis results, confirmed profile revision or evidence snapshot, all stage inputs and outputs, preliminary/final scores, brief gaps, user comments, every generated CV and optional cover letter, rendered document QA, edits/reruns, error/retry details, token/usage summaries and associated costs when available.
+
+- Token counter must show **actual provider-reported** input, output, total, cached and reasoning tokens when supplied, by stage and per-job total. Never invent token consumption; calculate estimated costs only from recorded price snapshots.
+- Save an inspectable artifact manifest, immutable version/checksum references and verified owner-scoped storage paths. File export/deletion, privacy consent and retention are mandatory for production readiness.
+- All surfaces, including website, installable PWA, extension and optional native Android client, use the same authenticated folder and CV engine interfaces.
+
+## 24. Release gate for the CV builder
+
+The CV engine is **not complete** until a fresh test candidate and JD can complete the staged workflow and approve a real one-page rendered DOCX/PDF, with both pre/post scores, a concise gap review, one user-requested rerun, verified metrics, and a full private audit folder. A separate account must be unable to access any part of the first user's folder or token history.
+
+**This addendum adds requirements; it does not claim that the current draft backend is deployed or that AI generation already works.**
+
+---
+
+# Addendum v1.3 — Creative CV Mode, ATS Structural Gate, Favourite Jobs and Smart Discovery
+
+**Added:** 23 November 2026. **Append-only:** Original master plan, Addendum v1.1 and v1.2 remain intact.
+
+## 25. User-selected “Think Creatively” before Make CV
+
+- Offer two modes **before** preparation: **Evidence First** (default) and **Think Creatively** (optional).
+- Creativity may vary framing, emphasis, action verbs, section priority, transferable-skills narrative, role focus and **descriptive functional department labels** where the user's verified work supports them.
+- It must never create or alter *official* employer names, legal job titles, actual departments presented as official, employment dates, education, qualifications, immigration or sponsorship claims, responsibility level, quantitative achievements or other historical facts.
+- A descriptive functional label such as “Finance Operations & Transformation Focus” may be suggested separately from the official department; do not claim it was the employer-assigned department unless independently verified.
+- Every material suggested rewrite must cite verified evidence, be shown as a change for user review, and require user approval when it changes meaning or terminology. An AI output alone cannot approve new career facts.
+- Both modes use exactly the same structured STAR evidence, short pre-CV gaps, Raw ATS and Recruiter Fit scores, document render gates, user comments, immutable revisions and audit/token history. Neither mode guarantees a score or employer shortlist.
+- Persist the selected mode in the private job workspace and record the change as an auditable event. Reruns may choose either mode without modifying the original base CV or source facts.
+
+## 26. No tables and enhanced ATS readability: absolute output rules
+
+- All **generated** CVs must contain **zero Word tables** (including layout tables and nested tables), **zero text boxes**, **one column only**, and no unnecessary graphics or header/footer-dependent content.
+- Do not align dates via tables. Use ordinary paragraphs, right-aligned tab stops or other parseable single-column text techniques and inspect the actual exported PDF alignment.
+- Where an uploaded base CV contains tables, columns or text boxes, preserve it unchanged as the source template, but create an ATS-safe adapted output for the selected application and disclose any necessary structural deviation.
+- Require editable DOCX and text-extractable PDF, both exactly one page with a minimum body font of 10 pt, measured section/date edge alignment, readable spacing and no clipped content.
+- In addition to PDF render inspection, inspect the generated DOCX OpenXML structure to ensure that no forbidden layout construct remains. Approval is blocked if it fails.
+
+## 27. Favourites, status timeline and separate user ownership
+
+Users must be able to save/unsave a job as a **favourite** independently of its current workflow status.
+
+Canonical stages: **Discovered, Interested, CV Preparing, CV Prepared, Applied, Applied + Connected, Rejected, Not Interested, Snoozed.**
+
+- The status is **per user**, not written back to a global shared job listing. Each change is timestamped with history; favourites never erase a status.
+- Applied and Applied + Connected require user confirmation or a verifiable authorised application event; the platform must never silently infer an external submission. Rejected must not be assumed from lack of response.
+- Dashboard counts and filters can aggregate the stages. “Active” excludes Rejected and Not Interested; Snoozed remains separately filterable.
+- Preserve state across browsers and mobile app for the same signed-in account. Reject stale multi-device state updates and support idempotent retries.
+
+## 28. Smart Sort and Filter & Sort discovery panel
+
+Smart Sort must be available on the main job-listings page and rank roles by the user's **confirmed** Career Intelligence Profile, target roles, preferred locations, recorded skills and relevant experience, with a small freshness tie-breaker. Without a confirmed profile, fall back transparently to Newest.
+
+- Explain high ranking with concise reasons such as “Target role match”, “Location match”, “Confirmed skills match”. **Smart Sort is not the Raw ATS Score or the Recruiter Fit Score.**
+- Never treat unknown work eligibility, salary or employer department as verified; show provenance. Any department inferred from a role title must be labelled **inferred**, not employer-verified.
+- Provide an integrated **Filter & Sort** panel inspired by the supplied screenshot: multi-value searchable include/exclude selectors for Company, Location, Department/Function, Designation; Discovery Category/Source; Existing Job Status; and Sort Jobs.
+- Include favourite-only filtering, keyword search, and available verified visa information. Existing future planned filters (including pay rate) are not removed.
+- Sort modes include Smart Sort/Best Matches, Newest, Oldest, Company, Designation, Location and Recently Changed Status.
+- Provide **Clear all** and **Apply filters** semantics; persist each user's own filter preferences.
+- **All filters must be applied across the full eligible job collection before pagination**, not merely to the current visible page. A temporary complete-scan implementation must fail visibly when its declared limit is exceeded; use a proper indexed discovery/search backend at scale.
+- Preserve job source URLs and posting provenance; do not imply that LinkedIn or an external ATS granted data extraction or scraping access.
+
+**UI ownership:** These are service/data/interaction requirements, not a mandate to retain the screenshot's colours, typography or exact component dimensions. The UI/UX designer remains free to create the presentation.
+
+**Detailed backend contracts:** [Job Discovery and Creative CV Mode Specification](JOB_DISCOVERY_CREATIVE_MODE.md) and [Strict CV Builder Specification](CV_BUILDER_STRICT_SPEC.md).
+
+
+---
+
+# Implementation checkpoint — Universal web.app, extension integration and full stage audit
+
+**Recorded:** 23 November 2026. **Append-only**: no previous phase, addendum, acceptance condition, or strict CV-builder requirement is removed or weakened by this checkpoint.
+
+- GuidOn's end-user target is **one independent Firebase Hosting `*.web.app` entrypoint**, responsive and installable as a PWA where supported, with one authenticated user account and shared backend. Actual address is assigned by a newly created Firebase Hosting site and must be verified after deployment; a GitHub code repository alone is not a live website.
+- The optional desktop Chrome extension is included in the architecture as an existing legacy prototype to migrate, **not a separate profile or jobs database**. Legacy source was located in `abhisheknair607-ux/automate_cv/experimental/garamaal-autofill/extension`. This source still contains a Next/Continue automation control and old account assumptions, which **must not** be carried into GuidOn. Only user-reviewed current-page fills, with manual navigation and submission, are permitted.
+- The website, extension and later optional native Android preparation browser share the exact same private Career Intelligence Profile, job captures, CV versions, evidence/Answer Bank and candidate-confirmed application events. A PWA does not gain an extension's external page DOM abilities.
+- Verified JD analysis, user-approved pre-CV gaps, separate Raw ATS Keyword Coverage and Recruiter Fit, one-page/no-table CV rendering, immutable version history and token ledger remain strict release gates. **Think Creatively** is permitted for source-backed narrative reframing only, never changing actual employment/education facts.
+- The complete [phase-by-phase acceptance audit](MASTER_PLAN_STAGE_AUDIT.md) distinguishes code foundations from a completed working user journey: **all original Phases 0–9 remain partial** until their own original exit criteria are demonstrated. No release milestone A–E is signed off.
+- The [Hosting launch checklist](WEBAPP_HOSTING_LAUNCH.md) and [Chrome extension integration contract](CHROME_EXTENSION_INTEGRATION.md) are additive implementation handoffs for the UI/UX designer and backend developer; neither claims live deployment.
+
+**Immediate acceptance order:** independent hosting and Auth → CV-first verified profile → live matching/gaps and strict CV generation → complete job/application workflow → optional connected Chrome extension → security/privacy/scaling sign-off. Features may be developed in parallel, but the core website must work without the extension.
+
+
+---
+
+# Addendum v1.4 — Unified Gmail Intelligence, Extension and Delivery Status
+
+**Recorded:** 23 November 2026. **Append-only:** this section builds on all previous sections, the original Phases 0–9, Addenda v1.1–v1.3 and the implementation checkpoint. Nothing already specified is removed or weakened.
+
+## 29. Two distinct, connected email capabilities
+
+The **first major email capability** is user-authorised Gmail **job-alert discovery and import**: recognise relevant LinkedIn/employer/recruiter alert messages, extract vacancy links and available details, deduplicate, and create or suggest a Discovery entry. A job alert does **not** mean an application was submitted.
+
+The **second major email capability** is the **Automated Application & Interview Tracking System**, a **future phase, not part of the initial implementation**. With separate explicit consent, the same connected Gmail account can detect:
+
+| Message signal | Intended future platform event | Confirmation requirement |
+| --- | --- | --- |
+| Job alert | Discovery job suggestion | No application state change |
+| Application received | Submitted application event | Correct application match; ask if ambiguous |
+| Application under review | In Review event | Sufficient employer and role evidence |
+| Assessment requested | Assessment task and deadline | Verify source, date and link |
+| Interview invitation | Interview Invited | Correct application match |
+| Interview scheduled | Interview Scheduled with date, time, timezone and meeting link | Ask about ambiguous dates/times |
+| Interview rescheduled | Update existing interview and retain prior appointment history | Identify original round reliably |
+| Recruiter reply | Recruiter Response or Action Needed | No inferred rejection/offer |
+| Rejection email | Propose Rejected | **Explicit user confirmation** |
+| Offer email | Potential Offer, then verified Offer Received | **Explicit user confirmation** |
+
+The resulting unified dashboard eventually presents **Jobs · Applications · Interviews · Offers**, with smart notifications, user-owned application timelines, assessments, interview rounds and later optional calendar integration.
+
+## 30. Intelligent Gmail-to-application matching and event integrity
+
+- Correctly link each message to a **specific application**, even where a user applied to several jobs at the same employer (e.g., multiple Microsoft vacancies). Compare application/requisition IDs, role title, sender/domain, email thread, employer ATS links, timeline and existing user-confirmed records.
+- Use explicit outcomes: **matched**, **needs user confirmation**, **unmatched** and **duplicate/ignored**. Never attach a message based only on company name.
+- Store immutable application events with source (`manual`, `extension`, `gmail`), event type, timestamps, matching evidence, confirmation status and safe message references. Current application status is derived from history, not overwritten without traceability.
+- Keep **job workflow statuses** (CV Preparing, CV Prepared, Applied, Applied + Connected, Rejected, Not Interested, etc.) separate from **employer application stages** (Submitted, Under Review, Assessment, Interview, Offer, Rejected). Synchronise intentionally to avoid contradicting states.
+- Distinguish a real application confirmation from newsletters, receipts and job alerts. Never infer a successful employer submission solely from viewing an apply page or filling an extension form.
+- Rejections, offers and ambiguous matches **must be confirmed by the user** before consequential application records change. A potential offer must not be treated as a confirmed offer or acceptance.
+- Make ingestion and status/event creation idempotent. Every correction and interview reschedule retains historical evidence. Allow manual corrections and unlinking of wrongly matched emails.
+
+## 31. Gmail connection architecture and future permissions
+
+The Gmail connection is **opt-in per user**. Separate choices allow job alerts only, application/interview tracking only, both or no email access. Forwarding selected alerts and a purpose-specific authorised Gmail API connection are alternatives to evaluate; neither allows silent forwarding creation or unrestricted mailbox access.
+
+Before launch, define appropriate minimal Google OAuth scopes and verification/security requirements, account identity mapping, renewal/revocation, encrypted server-side tokens, ingestion limits, least-data retention, retries, duplicate handling, export/delete and notifications. Email content is untrusted data, not executable commands. No marketing or recruiter correspondence should be sent on the user's behalf automatically.
+
+**Future Gmail roadmap (not implemented):** 1) job-alert authorisation/import; 2) receipt detection; 3) recruiter replies/status; 4) invitations and interview scheduling/rescheduling; 5) assessments/reminders; 6) offers/rejections with confirmation; 7) optional Calendar and interview preparation; 8) funnel and response analytics.
+
+Detailed requirements: [Gmail and Application & Interview Tracking Roadmap](GMAIL_INTEGRATION_APPLICATION_TRACKING.md). **Adding these requirements does not authorise connecting any user's Gmail or enable monitoring.**
+
+## 32. Chrome extension remains a first-class shared-platform companion
+
+The existing Manifest V3 extension prototype is located at [legacy Chrome extension source](https://github.com/abhisheknair607-ux/automate_cv/tree/main/experimental/garamaal-autofill/extension). It includes form inspection, field matching, autofill and a side panel, but is **not yet ported into GuidOn**.
+
+**Required end-to-end capabilities:** Capture Job (employer, title, location, JD and URL) → save to the owner's job database with deduplication → Make CV using the staged JD/profile/gaps workflow → recommend an appropriate existing or new CV → current-page-only autofill using verified profile/Answer Bank → candidate-confirmed application events synced to the platform.
+
+**Absolute boundary:** Never programmatically click **Next, Continue, Apply or Submit**. The user reviews fields, manually advances across pages and submits personally. The old extension's `clickNext()` control must be **removed**, not merely hidden; legacy account-specific and local-AI integrations must be replaced with secure per-user GuidOn backend calls. The website/PWA, extension and future mobile Career Browser use one private career profile, job collection, versioned CV history and application/event timeline; a PWA does not itself provide third-party-page DOM access.
+
+Gmail future tracking may corroborate or suggest later updates to the **same** application after the user applies using the extension; it must not create a duplicate record from an emailed receipt. Detailed migration contract: [Chrome Extension Integration](CHROME_EXTENSION_INTEGRATION.md).
+
+## 33. Current stage and `web.app` release truth
+
+The 23 November 2026 source-plan acceptance audit remains authoritative. **All Phases 0–9 are PARTIAL; none is signed off end-to-end.** Specific progress:
+
+| Area | Current implementation state |
+| --- | --- |
+| Project and Firebase Hosting foundation | Code/config prepared; independent live project and `web.app` address not verified |
+| User identity and Career Intelligence Profile | Authenticated backend/profile drafts tested; real sign-in, CV-first upload/AI extraction pending |
+| Dashboard and installable PWA | Temporary responsive shell/PWA configuration; live functional screens pending |
+| Job discovery, favourites, Smart Sort | Backend contracts and manual/assistant intake foundation; real permitted feeds and scale search pending |
+| JD understanding, gaps, pre/post ATS and Recruiter Fit | Validated backend functions/contracts; real AI matching/generation pending |
+| One-page CV rendering, STAR, no tables and versioning | Render-QA/immutable version foundations; live template-aware CV engine pending |
+| Application tracking | Per-user job choices and events partly implemented; full interview/application entities and analytics pending |
+| Chrome extension and mobile browser | Existing legacy source located, shared capture bridge defined; production migration pending |
+| Gmail alert import | **Planned**; no Gmail API OAuth or forwarding integration running |
+| Gmail application/interview intelligence | **Future**; no email-derived status/interview automation running |
+| Multi-user production security and scale | Local emulator tests; production security, privacy and operational gates pending |
+
+**One universal future entrypoint** will be an actual independently provisioned Firebase Hosting `https://<confirmed-site-id>.web.app` URL for desktop, browser/mobile PWA, with links to an independently installed Chrome extension and optional native Android browser. **No live `web.app` address is verified yet.** The protected Hosting-only deployment workflow does not enable Gmail reading, CV uploads, production Firebase rules or extension installation.
+
+**Execution priority:** isolated Firebase Hosting/Auth → CV-first profile and safe document intake → real staged CV engine → job/application records → integrated Chrome extension → optional Gmail job-alert intake → **later** automated application/interview email tracking → calendar/analytics, with security/consent milestones at each phase. The UI/UX designer remains free to redesign all screens while using these shared backend contracts.
+
+See [Phase Acceptance Audit](MASTER_PLAN_STAGE_AUDIT.md), [Hosting Launch Plan](WEBAPP_HOSTING_LAUNCH.md), [CV Builder Strict Specification](CV_BUILDER_STRICT_SPEC.md), and [Gmail Tracking Roadmap](GMAIL_INTEGRATION_APPLICATION_TRACKING.md).
+
+
+---
+
+# Addendum v1.5 — Firebase project bindings and working-core implementation checkpoint
+
+**23 November 2026 — Append-only update.** Every earlier requirement, phase exit criterion, CV scoring rule, extension safeguard and future Gmail capability remains in effect.
+
+## 34. Exact infrastructure projects supplied by the owner
+
+- **Firebase:** `guidon-career-fcda2` ([Firebase Console](https://console.firebase.google.com/project/guidon-career-fcda2/overview)) is the intended project for Hosting, web authentication, private Firestore/Storage and callable Functions.
+- **Google Cloud:** `guidon-career` ([GCP Console](https://console.cloud.google.com/home/dashboard?project=guidon-career)) is a **different project ID**. It may later host separate Cloud Run CV/AI workers after independent IAM and cross-project access review; it is not the GCP ID underlying Firebase `guidon-career-fcda2`.
+- **Website target:** `https://guidon-career-fcda2.web.app`, conditional on creation of its default Hosting site and a successful verified deployment. This is not yet a live URL we have confirmed.
+- A preview alias in `.firebaserc` and protected, manually approved GitHub workflows target **only** `guidon-career-fcda2`. A feature flag prevents showing a broken logged-in app before live backend verification. Owner-side Web SDK configuration, Auth providers, Firestore, Hosting, billing and deployment identity remain outstanding.
+- [Exact project binding and setup guidance](FIREBASE_PROJECT_SETUP.md).
+
+## 35. Actual working-core implementation added to the draft branch
+
+- **Email/Google sign-in, registration, reset, authenticated account bootstrap**, session boundary and same-user private workspace APIs now have frontend/back-end code. Live production authentication is not yet verified.
+- **Career Intelligence Profile editor:** manually add confirmed job and education experience, separate key numbers and complete STAR stories; save editable drafts, then approve immutable revisions. Base-CV-first secure upload, scanning and AI extraction are **not implemented**.
+- **Jobs:** user-owned manual job addition, JD/source capture, discovery filters, Smart Sort, favourites, status events and job details wired to callable APIs. Permitted live feeds and scalable index remain pending.
+- **Applications:** each submitted application now has an authenticated job-linked entity, immutable status history, interview details and optional approved CV-version association. Job card status derives from the confirmed application event. A mere Apply link click or autofill cannot mark Applied; user-confirmed rejection is recorded through the application timeline.
+- **CV Studio:** create private named workspaces, review cleaned JD and exact grounded requirements, select Evidence First or Think Creatively and inspect saved stage, scores and token records. Automatic AI matching, gaps, generation and post-render scoring are not connected.
+- **Real-document worker:** deterministic evidence-only fallback converts approved STAR stories into actual editable DOCX, text-extractable PDF and TXT, with single-column/no-table and one-page render QA. It is a *worker building block*, not a deployed AI CV generator; does not preserve an uploaded base CV's layout, does not produce user-facing downloads yet and cannot bypass scoring or human approval.
+
+## 36. Release status and remaining invariants
+
+**All original Phases 0–9 remain PARTIAL**, notwithstanding code, unit tests and emulator checks. No production Hosting or Functions release has been executed in this chat, and neither provided console link alone supplies credentials.
+
+Complete the actual Firebase services, Auth and privacy gates, real CV upload/scanning/AI extraction, source-grounded JD/profile matching, user-facing gap review, strict one-page output with actual pre/post dual scores, token/cost audit, versioned reruns, and tested secure downloads before treating core CV generation as finished. Keep legacy Chrome extension migration, current-page-only autofill, separate Gmail permissions and future application/interview intelligence intact.
+
+The **UI/UX designer retains full control** of final screens; the implemented screens are temporary functional scaffolding.
+
+
+---
+
+## Firebase Web App client registration checkpoint — 23 November 2026
+
+The project owner supplied and registered the public Firebase JS SDK configuration for Web App `1:752868294981:web:1d58d1f90348e9cbd6fe2c` in the exact Firebase project **`guidon-career-fcda2`**. The browser SDK identifiers (including the optional measurement ID) are committed as public client configuration in `src/firebase-web-config.ts` and used by `src/firebase.ts`. The Hosting workflow no longer requires these values separately as GitHub environment variables.
+
+This completes the **Web App configuration** part of Phase 0 only. It does **not** establish that Authentication sign-in providers, Firestore database, Cloud Functions, Hosting site, OIDC deployment identity or a verified `web.app` release are enabled. The project remains on **Spark**; the existing Functions-backed private platform is **still gated and not operational**. The Hosting-only GitHub workflow forces the safe public-preview mode, with `VITE_GUIDON_CORE_ENABLED=false`.
+
+**Next owner-side console action:** enable Google and Email/Password in Firebase Authentication, then configure standard Hosting. Before any private candidate information is collected, implement and validate an approved backend/permission model (Spark-compatible alternative or Blaze-based Functions), with restrictive Firestore/Storage rules and two-user security tests. No service-account secrets, Gmail access or personal CV data are stored in the public browser config.
+
+See [Firebase Project Setup](FIREBASE_PROJECT_SETUP.md) and [Hosting Launch Plan](WEBAPP_HOSTING_LAUNCH.md). All original master-plan phases remain subject to their existing complete exit criteria.
+
+
+---
+
+## Firebase Hosting default site provisioned — first release pending
+
+**23 November 2026 — Append-only infrastructure checkpoint.** The project owner has confirmed via Firebase Console screenshots that the standard Hosting site `guidon-career-fcda2` exists, with the default domains `guidon-career-fcda2.web.app` and `guidon-career-fcda2.firebaseapp.com`. The Hosting dashboard explicitly states **“Waiting for your first release.”** The Google and Email/Password Authentication providers are also shown enabled.
+
+The repository now contains an owner-run, project-bound **Spark-compatible static preview** script: `scripts/deploy-spark-preview.sh`, documented in [Firebase Hosting Launch](WEBAPP_HOSTING_LAUNCH.md). It runs frontend build/tests and deploys **Hosting only** under an interactive Google identity with exact project `guidon-career-fcda2`. It requires explicit release confirmation and forces `VITE_GUIDON_CORE_ENABLED=false`. The separate GitHub Actions OIDC workflow remains the intended protected route for later production releases.
+
+**Not yet complete:** No first Hosting release has been verified in the console; no private Functions-backed account/profile/CV workflow is live on Spark; no Gmail permissions or application automation are activated. The core application's security, CV-first upload, AI generation, extension integration and earlier phase acceptance requirements are unchanged.
+
+
+---
+
+## Owner-reported live static Hosting and Spark authentication-only acceptance gate
+
+**23 November 2026 — Infrastructure progress, append-only.** The owner reports that GuidOn's first static Firebase Hosting release was successfully published under project `guidon-career-fcda2`. The site has the default `https://guidon-career-fcda2.web.app` domain. The deployment is **owner-reported**, not independently verified from this environment. It is only a static preview; private Career Intelligence Profile, job data, CV generation, and Gmail are not live.
+
+The development branch now supports a separate **Firebase Authentication-only smoke test** on Spark, explicitly enabled by `VITE_GUIDON_AUTH_PREVIEW_ENABLED=true` during owner-authorised build/deploy. It tests Google/email/password signup/login and sign-out using Firebase's web SDK **without** calling undeployed Cloud Functions, changing Firestore/Storage rules or collecting CV files. The script always forces `VITE_GUIDON_CORE_ENABLED=false`, and its default remains a static preview. This Auth-only upgrade is **not yet claimed to be deployed**, and the profile/backend phase remains incomplete.
+
+See [Hosting launch and Auth smoke test instructions](WEBAPP_HOSTING_LAUNCH.md). Next secure data milestone: separately designed and tested owner-scoped Firestore rules, followed by staged profile/job persistence or an approved Blaze Functions backend; no public test-mode database rules.
+
+
+---
+
+# Addendum v1.6 — Canonical Data Architecture, AI Efficiency and End-to-End Pipeline
+
+**Recorded:** 23 November 2026. **Append-only architectural baseline / pre-build gate.** Preserve all original Phases 0–9, Release A–D criteria, CV-first and strict one-page CV rules, Chrome extension constraints, Gmail capability A/B and previous Addenda. Architecture design decisions below require explicit security/technical acceptance **before** releasing client-writable private data.
+
+## 37. First-class architecture and data-model gate
+
+**GuidOn must have one coherent data model and one source of truth per entity.** All consumers (web, installable PWA, optional Chrome extension, future Android Career Browser, future authorised Gmail connectors) share the same Firebase identity and typed services for user-owned job, profile, CV and application records.
+
+Four distinct data/trust classes:
+1. **Public:** published product content and approved configuration only; never user CV/profile/contact or private job email content.
+2. **Controlled shared catalogue:** rights-permitted public job listings, source-version metadata and generic reusable JD requirements; ingestion-service writes only. **Publicly accessible source ≠ unlimited republication rights.**
+3. **User-private:** Career Intelligence Profile, original base CV, verified STAR/metrics, Answer Bank, private job captures, source observations, favourites, CV workspaces and approved versions, application/interview histories, preferences and email connection consent metadata. Owner and narrowly authorised service access.
+4. **Highly restricted internal:** OAuth tokens, provider/AI credentials, document scanning and server-side work queues, necessary encrypted email pointers, cost internals and audit logs. No browser or third-party connector direct access.
+
+**Canonical schema target:** one `users/{uid}` namespace with profile/current, drafts and immutable revisions; separate experience/education/evidence/answers; private saved jobs linked optionally to `jobCatalog`; CV workspaces and immutable versions; applications and append-only events/interviews; connections/usage/notifications. Large documents belong in private secured object storage once supported, not general Firestore job-card documents. Secrets belong only to managed server-side credentials.
+
+**Known migration risk:** Current development code has both Functions' `users/{uid}/...` and Spark prototype `sparkUsers/{uid}/...` collection paths, along with separate `savedJobs` and `manualJobs`. These are **not two permanent accepted data models**. Before live data writes, agree one target schema, typed repository adapter, legacy crosswalk, reversible migration, idempotent identifier mapping and full two-user privacy tests. Do not silently dual-write or silently copy another project's personal data.
+
+The underlying data model, access matrix and migration checklist are specified in [Canonical Database Model](DATABASE_CANONICAL_SCHEMA.md). These are proposed target contracts, **not claimed as already deployed schemas**.
+
+## 38. Unified job-source gateway and universal identifiers
+
+Every job enters through one standardised source observation. Sources in scope: user paste/URL and JD, Chrome extension DOM capture, future user-authorised Gmail job alerts/forwarding, permitted employer/ATS/provider feeds, recruiter-supplied links, later other authorised email systems and mobile Career Browser captures.
+
+**Intake:** owner/source authentication → source rights/provenance → typed extraction → deterministic cleaning → employer requisition/URL/hash deduplication → sharing classification → private job or approved shared catalogue → source-version history → user-personal Smart Sort, filters and favourites.
+
+One vacancy captured from several sources must yield **one saved user opportunity with multiple source references**, not multiple application timelines. Personal/forwarded email content remains private; a shared job catalogue must never expose recruiter conversations or the user's personal notes. Feeds must honour permissions and licensing; do not depend on unrestricted scraping.
+
+**Required IDs/references:** Auth `uid`; reusable `catalogJobId` when allowed; private `userJobId`; source observation/version; exact `jdVersionHash`; confirmed `profileRevisionId` and `evidenceId`; `workspaceId`, immutable `cvVersionId`; independent `applicationId` and append-only `eventId`. Explicit references link these, never infer ownership from names or URL text.
+
+## 39. Single job-to-CV-to-application processing pipeline
+
+`Job intake → clean/version JD → verify requirements → match latest confirmed profile/evidence → compute pre-CV Raw ATS & Recruiter Fit → concise gap review → user corrections/confirmed STAR → draft CV using saved base format and factual/creative writing option → actual one-page/no-table DOCX/PDF QA → independent post-CV Raw ATS & Recruiter Fit from visible exported content → user approval and version history → recommend CV → manual application → confirmed event timeline → future Gmail and Calendar signals → Dashboard.`
+
+**Every step has typed input/output, user/source ownership, status, timestamps, schema/rubric/prompt/engine versions, idempotency key, hash and traceable evidence references.** A downstream step can retry or resume only if its upstream approved snapshot is unchanged. Failed stages do not promote an unapproved score or CV version.
+
+**CV non-negotiables retained:** strict one-page CV; user-provided base template appearance preserved where technically feasible; no tables; accurate right-aligned dates and consistent left/right boundaries; readable font and maximum two rendered lines per STAR bullet; use hyphens sparingly in paragraph prose; separate key numbers/STAR evidence for each job and education entry; creative mode may strengthen truthful emphasis but never alter factual employment/education/eligibility claims. The post-CV dual scores must use **only facts visibly represented in the exact exported CV**, not hidden profile evidence. All prompt inputs, outputs, model tokens/costs, scores, gaps, user comments, QA and versions are saved in the private company/designation/location workspace.
+
+**Extension rule:** current-page autofill only; never automatically click Next, Continue, Apply or Submit. A filled form is not proof of submission. **Gmail rule:** Phase A imports job alerts; separately consented Phase B can propose application/interview updates later; offers, rejections and ambiguous same-employer matches require user confirmation.
+
+Detailed source and handoff graph: [Integrated Pipeline and Phase Gates](INTEGRATED_PIPELINE_AND_PHASE_GATES.md).
+
+## 40. AI token, latency and accuracy policies
+
+**Deterministic-first:** Use structured parsers, normalisation, exact keys, dedup, basic Smart Sort, keyword matching, Raw ATS calculation, Firestore writes, geometry QA, status and email rules without AI. Use compact/small structured-output models only for ambiguous JD/entity extraction or evidence interpretation, and higher-capability models selectively for grounded CV composition/complex review. No AI call on opening a dashboard, filtering, favouriting, toggling status or revisiting unchanged results.
+
+**Caching and invalidation:** Share generic JD analysis *only when licensing/privacy permit* and it contains no user data. Partition personal matching, gap, CV and recruiter-scoring caches by UID, confirmed profile revision, JD hash, scoring rubric/prompt/model version and selected verified evidence. Post-CV scoring and render QA bind to exact exported file hash. Changed inputs invalidate affected downstream results; unchanged stages are reused. Stable schema and prompt prefixes may benefit from provider prompt caching.
+
+**Token/cost ledger per request and CV version:** model/provider, input/cached/output tokens, latency, stage attempt, cost estimate, retry count, model/rubric version and user-triggered operation. Enforce configurable per-user/per-workspace budgets, timeouts/retry ceilings and cancellation; actual benchmarks determine numerical limits, not invented fixed promises. Keep provider keys off all clients.
+
+**Performance plan:** lightweight indexed cards and cursors, on-demand full JD reads, no broad live collection listeners, selective background heavy processing with persistent states, retries and progress. Measure p50/p95 latency, daily database reads/writes, storage/index cost, cache hit, token cost per CV, duplicate detection, extraction/recruiter matching accuracy and failed job rates. Target roughly immediate feedback for light actions and a few seconds for routine intake under normal benchmark conditions; heavy CV work shows progress, not false immediate completion.
+
+**Evidence and accuracy:** source-backed requirements, user-confirmed numerical/STAR evidence, explainable score formulas, version-linked claims and independently inspected rendered files. Zero tolerated cross-user exposure, fabricated qualifications/metrics, automatically submitted applications and unconfirmed consequential Gmail statuses.
+
+Detailed engineering policies: [Architecture, Connections and AI Efficiency](ARCHITECTURE_DATA_AI_EFFICIENCY_SPEC.md).
+
+## 41. Secure lifecycle, release criteria and staging
+
+**Security:** least privilege, Firebase Auth `uid`, strict Firestore rules and server-side checks, no secrets/refresh tokens in public configuration, encrypted restricted connectors, idempotency, stale-write concurrency controls, privacy-safe logs, retention, export and deletion. Append-only histories provide accountability during the user's account lifetime; they cannot override lawful personal-data erasure requirements.
+
+**Pre-implementation architecture gates:** A) canonical schema/migration and source ownership; B) privacy/consent/read-write matrix and emulator cross-user tests; C) typed module contracts with one application/event authority; D) AI token/accuracy/real-document benchmarks; E) monitored staging release and rollback. A failed gate blocks live private data or verified AI outputs.
+
+**Release pacing:** architecture gate → secure user profile/jobs on Spark → CV-first scanning/extraction via appropriate authorised backend → multi-source discovery → JD matching/gaps → strict real CV rendering/dual scoring → complete application tracking → Chrome extension/mobile assistant → optional Gmail alerts → later Gmail interview intelligence → scalability/100+ user production acceptance.
+
+**Infrastructure truth:** Firebase Hosting `guidon-career-fcda2.web.app` and Google sign-in were validated by the owner on mobile; this does **not** imply that Firestore private persistence, Functions, AI models, CV uploads, Chrome extension or Gmail are live. On Spark, the present Functions-based core cannot be deployed as-is. Proposed Spark client-access rules are not production approved, particularly where a browser could modify purportedly trusted score fields. No automatic deployment or permission expansion is authorised by this document.
+
+**UI/UX constraint:** the final designer may replace screens while all clients retain the same data contracts, statuses, provenance, security and feature acceptance. A successful component test is not the same as the original Phase 0–9 acceptance sign-off.
+
+## 42. Architecture references and decision checklist
+
+- [Database Canonical Schema, Access Matrix and Migration](DATABASE_CANONICAL_SCHEMA.md)
+- [Architecture, AI Token Efficiency and Reliability](ARCHITECTURE_DATA_AI_EFFICIENCY_SPEC.md)
+- [Multi-Source Pipeline, Integrations and Release Phases](INTEGRATED_PIPELINE_AND_PHASE_GATES.md)
+- [Source Plan Completion Audit](MASTER_PLAN_STAGE_AUDIT.md)
+- [Strict CV Builder Specification](CV_BUILDER_STRICT_SPEC.md)
+- [Firebase Hosting / Spark Release Constraints](FIREBASE_PROJECT_SETUP.md)
+
+**Status:** All architecture requirements from the latest discussion are now added to the development backlog and baseline spec, but implementation and release gates remain separately tracked.

@@ -1,0 +1,74 @@
+name: Deploy static GuidOn website to Firebase Hosting (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Type DEPLOY_SAFE_STATIC_PREVIEW to acknowledge only the placeholder website will be published."
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: guidon-static-hosting-preview
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: guidon-hosting-preview
+    steps:
+      - name: Validate explicit confirmation and isolated Firebase configuration
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+          GUIDON_PROJECT: ${{ vars.GUIDON_FIREBASE_PROJECT_ID }}
+          GUIDON_WIF: ${{ vars.GUIDON_GCP_WIF_PROVIDER }}
+          GUIDON_SERVICE_ACCOUNT: ${{ vars.GUIDON_GCP_DEPLOY_SERVICE_ACCOUNT }}
+        run: |
+          set -eu
+          test "$CONFIRMATION" = "DEPLOY_SAFE_STATIC_PREVIEW" || { echo "Deployment was not explicitly confirmed."; exit 1; }
+          test -n "$GUIDON_PROJECT" || { echo "GUIDON_FIREBASE_PROJECT_ID is missing."; exit 1; }
+          test -n "$GUIDON_WIF" || { echo "GUIDON_GCP_WIF_PROVIDER is missing."; exit 1; }
+          test -n "$GUIDON_SERVICE_ACCOUNT" || { echo "GUIDON_GCP_DEPLOY_SERVICE_ACCOUNT is missing."; exit 1; }
+          test "$GUIDON_PROJECT" = "guidon-career-fcda2" || { echo "This workflow is restricted to the GuidOn Firebase project ID."; exit 1; }
+          # This is the Firebase project ID; guidon-career is a separate supplied GCP project.
+      - name: Checkout reviewed main branch
+        uses: actions/checkout@v4
+      - name: Install Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install and verify static UI
+        # Public Firebase Web App SDK config is checked into src/firebase-web-config.ts.
+        # GitHub variables are still required for protected deployment identity, not SDK config.
+        env:
+          VITE_GUIDON_CORE_ENABLED: 'false'
+        run: |
+          npm install --no-audit --no-fund
+          npm run check
+          npm test
+          npm run build
+      - name: Authenticate to isolated Google Cloud project using OIDC
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GUIDON_GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GUIDON_GCP_DEPLOY_SERVICE_ACCOUNT }}
+          project_id: ${{ vars.GUIDON_FIREBASE_PROJECT_ID }}
+          token_format: access_token
+      - name: Deploy Hosting only; never deploy Functions or security rules
+        env:
+          GUIDON_PROJECT: ${{ vars.GUIDON_FIREBASE_PROJECT_ID }}
+        run: |
+          set -eu
+          npx --yes firebase-tools@15.0.0 deploy --only hosting --non-interactive --project "$GUIDON_PROJECT"
+      - name: Summarise deployment identity (not verification)
+        env:
+          GUIDON_PROJECT: ${{ vars.GUIDON_FIREBASE_PROJECT_ID }}
+        run: |
+          echo "Hosting-only deploy requested for project: $GUIDON_PROJECT"
+          echo "Check the Firebase Console for the actual assigned .web.app address and verify the live site on desktop and mobile."
+          echo "No backend services, CV uploads or user data were enabled by this workflow."
