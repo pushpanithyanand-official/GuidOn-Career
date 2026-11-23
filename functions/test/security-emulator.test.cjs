@@ -75,7 +75,7 @@ test('candidate rules permit only an unexpired, size-matched, owner-approved one
     await assertFails(uploadBytes(ref(userA.storage(), uploadPath(expiredId)), payload, { contentType: 'application/pdf' }));
     await assertFails(getBytes(ref(userB.storage(), uploadPath(uploadId))));
     await assertFails(deleteObject(ownFile));
-    assert.deepEqual([...await assertSucceeds(getBytes(ownFile))], [...payload]);
+    assert.deepEqual([...new Uint8Array(await assertSucceeds(getBytes(ownFile)))], [...payload]);
   } finally {
     await env.cleanup();
   }
