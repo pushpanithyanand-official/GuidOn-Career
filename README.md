@@ -121,3 +121,8 @@ The draft branch includes live-code React pages behind Firebase Auth: Career pro
 The real Firebase Web App config, authorised Google/email providers, Firestore/Hosting services and protected deploy identity still need owner-side provisioning. `VITE_GUIDON_CORE_ENABLED=false` prevents pretending that static Hosting alone is a functioning private application. **No production deployment, Gmail connection or CV upload has been enabled.**
 
 Run CI and review the [phase audit](docs/MASTER_PLAN_STAGE_AUDIT.md) before manually authorising the [Hosting](.github/workflows/deploy-hosting.yml) or [Functions](.github/workflows/deploy-core-backend.yml) workflow.
+
+
+### Firebase Web App registration confirmed (23 November 2026)
+
+The owner supplied the public SDK `firebaseConfig` for `guidon-career-fcda2`. Its browser identifiers are now in `src/firebase-web-config.ts`; GitHub environment variables are **not needed** for these public values. `src/firebase.ts` validates the project ID/App ID/Auth domain, and the Hosting workflow builds a safe **Spark preview** with private APIs disabled. The site is **not yet deployed**, and full account/job/CV workflows still require server-side backend availability. Next owner action: enable Google and Email/Password under Firebase Authentication, then configure standard Hosting.
