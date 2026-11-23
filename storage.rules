@@ -1,0 +1,9 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Phase 0: no CV or profile uploads before authenticated ownership rules.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
