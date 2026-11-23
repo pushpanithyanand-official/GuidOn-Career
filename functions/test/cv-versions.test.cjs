@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { validateRenderedCvMedia } = require('../lib/cv-versions.js');
+const { validateRenderedCvMedia, validateVisibleEvidenceClaims } = require('../lib/cv-versions.js');
 const { validateCvQuality } = require('../lib/cv-workflow.js');
 
 const docx = Buffer.concat([Buffer.from('PK'), Buffer.alloc(150, 1)]);
@@ -24,4 +24,20 @@ test('one-page visual QA does not silently forgive two pages or misalignment', (
   assert.equal(validateCvQuality({ ...qa, rightEdgeMaxDriftPt: 1.2 }).passed, false);
   assert.equal(validateCvQuality({ ...qa, starBulletsComplete: false }).passed, false);
   assert.equal(validateCvQuality({ ...qa, bodyText: 'Reduced turnaround - improved controls' }).passed, false);
+});
+
+test('visible recruiter evidence must be present in rendered text and confirmed profile', () => {
+  const evidenceId = '550e8400-e29b-41d4-a716-446655440011';
+  const claimId = '550e8400-e29b-41d4-a716-446655440012';
+  const claims = [{ claimId, exactVisibleText: 'Improved operating efficiency',
+    evidenceIds: [evidenceId] }];
+  const valid = validateVisibleEvidenceClaims(text, claims, new Set([evidenceId]));
+  assert.equal(valid.valid, true);
+  assert.deepEqual(valid.representedEvidenceIds, [evidenceId]);
+  const absent = validateVisibleEvidenceClaims(text,
+    [{ ...claims[0], exactVisibleText: 'Invented £4 million sales increase' }],
+    new Set([evidenceId]));
+  assert.equal(absent.valid, false);
+  const unknown = validateVisibleEvidenceClaims(text, claims, new Set());
+  assert.equal(unknown.valid, false);
 });
