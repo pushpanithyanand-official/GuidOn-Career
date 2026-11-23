@@ -32,6 +32,9 @@ const story = (): Star => ({ id: crypto.randomUUID(), situation: '', task: '', a
 export default function CareerPage() {
   const { workspace, refresh } = useSession();
   const [profile, setProfile] = useState<Profile>(blank);
+  const [roleText,setRoleText]=useState('');
+  const [locationText,setLocationText]=useState('');
+  const [skillsText,setSkillsText]=useState('');
   const [revisionId, setRevisionId] = useState<string | null>(null);
   const [state, setState] = useState<'loading'|'draft'|'confirmed'>('loading');
   const [busy, setBusy] = useState(false);
@@ -41,7 +44,11 @@ export default function CareerPage() {
     setError('');
     try {
       const result = await callGuidon<ProfileResponse>('getMyCareerProfile');
-      setProfile({ ...blank(), ...(result.draft?.profile ?? result.confirmed?.profile ?? {}) });
+      const next={ ...blank(), ...(result.draft?.profile ?? result.confirmed?.profile ?? {}) };
+      setProfile(next);
+      setRoleText(csv(next.targetRoles));
+      setLocationText(csv(next.targetLocations));
+      setSkillsText(csv(next.skills));
       setRevisionId(result.confirmed?.revisionId ?? null);
       setState(result.draft ? 'draft' : result.confirmed ? 'confirmed' : 'draft');
     } catch (cause) { setError(safeError(cause)); setState('draft'); }
@@ -65,15 +72,20 @@ export default function CareerPage() {
         (!profile.experience.length && !profile.education.length))) {
         throw new Error('Add a name and at least one education or work entry before confirming.');
       }
+      const cleaned: Profile = {
+        ...profile,
+        experience:profile.experience.map(x=>({...x,highlights:x.highlights.map(y=>y.trim()).filter(Boolean)})),
+        education:profile.education.map(x=>({...x,highlights:x.highlights.map(y=>y.trim()).filter(Boolean)})),
+      };
       if (confirmed) {
         const result = await callGuidon<{ revisionId: string }>('confirmCareerProfile', {
-          profile, expectedRevisionId: revisionId, userConfirmed: true,
+          profile:cleaned, expectedRevisionId: revisionId, userConfirmed: true,
         });
         setRevisionId(result.revisionId); setState('confirmed');
         setMessage('Your verified career profile is saved. Later edits create a new revision.');
         await refresh();
       } else {
-        await callGuidon('saveMyProfileDraft', { profile });
+        await callGuidon('saveMyProfileDraft', { profile:cleaned });
         setState('draft');
         setMessage('Draft saved. Draft information cannot be used as confirmed CV evidence.');
       }
@@ -98,9 +110,9 @@ export default function CareerPage() {
           <label>Professional headline<input value={profile.headline ?? ''} onChange={e => change('headline',e.target.value)} /></label>
           <label>Email<input type="email" value={profile.contact?.email ?? ''} onChange={e => change('contact',{ ...profile.contact, email: e.target.value || undefined })} /></label>
           <label>Current city<input value={profile.contact?.city ?? ''} onChange={e => change('contact',{ ...profile.contact, city: e.target.value })} /></label>
-          <label>Target roles (comma separated)<input value={csv(profile.targetRoles)} onChange={e => change('targetRoles',split(e.target.value))} /></label>
-          <label>Target locations (comma separated)<input value={csv(profile.targetLocations)} onChange={e => change('targetLocations',split(e.target.value))} /></label>
-          <label className="span-all">Skills (comma separated)<textarea rows={2} value={csv(profile.skills)} onChange={e => change('skills',split(e.target.value))} /></label>
+          <label>Target roles (comma separated)<input value={roleText} onChange={e => {setRoleText(e.target.value);change('targetRoles',split(e.target.value));}} /></label>
+          <label>Target locations (comma separated)<input value={locationText} onChange={e => {setLocationText(e.target.value);change('targetLocations',split(e.target.value));}} /></label>
+          <label className="span-all">Skills (comma separated)<textarea rows={2} value={skillsText} onChange={e => {setSkillsText(e.target.value);change('skills',split(e.target.value));}} /></label>
           <label className="span-all">Professional summary<textarea rows={3} value={profile.professionalSummary ?? ''} onChange={e => change('professionalSummary',e.target.value)} /></label>
         </div>
       </div>
@@ -116,7 +128,8 @@ export default function CareerPage() {
             <label>Official job title<input value={entry.title} onChange={e => changeExp(i,{title:e.target.value})} /></label>
             <label>Employer<input value={entry.employer} onChange={e => changeExp(i,{employer:e.target.value})} /></label>
             <label>Official department (optional)<input value={entry.officialDepartment ?? ''} onChange={e => changeExp(i,{officialDepartment:e.target.value})} /></label>
-            <label>Dates (for example 2023–2026)<input value={entry.startDate ?? ''} onChange={e => changeExp(i,{startDate:e.target.value})} /></label>
+            <label>Start date or year<input value={entry.startDate ?? ''} onChange={e => changeExp(i,{startDate:e.target.value})} /></label>
+            <label>End date or Present<input value={entry.endDate ?? ''} onChange={e => changeExp(i,{endDate:e.target.value})} /></label>
             <label className="span-all">Responsibilities and results, one per line<textarea rows={3} value={entry.highlights.join('\n')} onChange={e => changeExp(i,{highlights:e.target.value.split('\n').map(x=>x.trim()).filter(Boolean)})} /></label>
           </div>
           <EvidenceEditor metrics={entry.keyNumbers} stories={entry.starStories}
