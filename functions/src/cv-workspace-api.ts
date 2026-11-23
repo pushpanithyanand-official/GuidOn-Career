@@ -25,6 +25,13 @@ const revisionInput = lookupInput.extend({
   expectedStageVersion: z.number().int().min(0),
   comment: z.string().trim().min(1).max(4000),
 }).strict();
+const approvalInput = lookupInput.extend({
+  approvalId: identifier,
+  cvVersionId: identifier,
+  expectedStageVersion: z.number().int().min(0),
+  userConfirmed: z.literal(true),
+}).strict();
+
 const MAX_AUDIT_BYTES = 20_000_000;
 
 function uidFor(request: CallableRequest<unknown>) {
@@ -353,4 +360,57 @@ export const readMyCvAuditArtifact = onCall(settings, async request => {
     relativePath: data.path, contentType: data.contentType,
     sha256: data.sha256, text: content.toString('utf8'),
   };
+});
+
+/** Final approval is a user-triggered action, pinned to the actual QA-passed CV version. */
+export const approveMyCvVersion = onCall(settings, async request => {
+  const uid = uidFor(request);
+  const input = validate(approvalInput, request.data);
+  const { ref, record } = await existingWorkspace(uid, input.workspaceId);
+  const approval = ref.collection('approvals').doc(input.approvalId);
+  const existing = await approval.get();
+  if (existing.exists) {
+    if (existing.data()?.cvVersionId !== input.cvVersionId) {
+      throw new HttpsError('already-exists', 'Approval ID is already attached to another CV version.');
+    }
+    return { stage: 'approved', cvVersionId: input.cvVersionId, approvalId: input.approvalId };
+  }
+  if (record.stage !== 'ready_for_user_approval' ||
+      record.stageVersion !== input.expectedStageVersion ||
+      record.latestCvQualityPassed !== true ||
+      record.latestScoredCvVersionId !== input.cvVersionId) {
+    throw new HttpsError('failed-precondition',
+      'This exact CV has not passed one-page QA and post-CV scoring or is not ready for approval.');
+  }
+  const audit = await writeCvAuditArtifact(uid, input.workspaceId, {
+    id: input.approvalId,
+    category: 'user_approval',
+    relativePath: `05-cv/approval-${input.approvalId}.json`,
+    contentType: 'application/json',
+    content: JSON.stringify({
+      cvVersionId: input.cvVersionId,
+      userConfirmed: true,
+      postCvScoreSnapshotId: record.latestPostCvScoreSnapshotId ?? null,
+    }),
+  });
+  await getFirestore().runTransaction(async tx => {
+    const latest = await tx.get(ref);
+    if (latest.data()?.stage !== 'ready_for_user_approval' ||
+        latest.data()?.stageVersion !== input.expectedStageVersion ||
+        latest.data()?.latestCvQualityPassed !== true ||
+        latest.data()?.latestScoredCvVersionId !== input.cvVersionId) {
+      throw new HttpsError('failed-precondition', 'The CV changed while approval was being recorded.');
+    }
+    tx.create(approval, {
+      cvVersionId: input.cvVersionId, auditArtifactId: audit.artifactId,
+      createdAt: FieldValue.serverTimestamp(),
+    });
+    tx.update(ref, {
+      stage: 'approved',
+      stageVersion: FieldValue.increment(1),
+      approvedCvVersionId: input.cvVersionId,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+  });
+  return { stage: 'approved', cvVersionId: input.cvVersionId, approvalId: input.approvalId };
 });
