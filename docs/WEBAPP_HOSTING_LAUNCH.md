@@ -57,3 +57,12 @@ If the static release misbehaves, the authorised project owner reverts/redeploys
 The owner has now supplied Firebase project ID **`guidon-career-fcda2`** and a **different** GCP project ID `guidon-career`. Earlier text describing a still-unknown independent Firebase project should be read as *project ownership and service configuration remain unverified*, not that the ID is unknown. The deploy workflows are now restricted to the exact Firebase ID. See [the concrete setup guide](FIREBASE_PROJECT_SETUP.md).
 
 There is now a signed-in core React scaffold and callable application model, but the website is intentionally feature-gated until the real Firebase Web App SDK values, sign-in providers, Firestore, Functions deployment and two-account smoke checks are verified. The protected Hosting workflow defaults to `VITE_GUIDON_CORE_ENABLED=false`. **No live default Hosting URL has been verified.**
+
+
+## Verified client configuration, unverified hosting release
+
+The owner supplied the full Firebase JS Web App `firebaseConfig` on 23 November 2026. It has been connected in the repository as public client configuration at `src/firebase-web-config.ts` and referenced from `src/firebase.ts`. This step is complete and does **not** require pasting those same public values again in GitHub repository variables.
+
+The **site has not been deployed or verified**, Google/email Auth providers may still need enabling, and the Spark plan does not support the existing Firebase Functions deployment workflow. The protected Hosting-only workflow now explicitly builds **preview mode only** with `VITE_GUIDON_CORE_ENABLED=false`.
+
+Next console step is **Authentication → Sign-in method → Google / Email/Password**, followed by standard Hosting configuration, with private user data and callable functions still gated. See [project setup](FIREBASE_PROJECT_SETUP.md).
