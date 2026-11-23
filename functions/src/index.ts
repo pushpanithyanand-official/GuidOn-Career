@@ -207,3 +207,5 @@ export { setMyCvGenerationMode } from './cv-generation-mode-api';
 export { addMyManualJob, getMyManualJobDetails } from './manual-jobs-api';
 
 export { captureMyJobFromAssistant } from './assistant-bridge-api';
+
+export { createMyApplication, updateMyApplication, listMyApplications, getMyApplicationTimeline } from './application-api';
