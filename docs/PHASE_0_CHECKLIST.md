@@ -31,3 +31,18 @@ A developer can run and deploy the static starter; secrets remain outside Git; e
 ## Source plan audit and website/extension handoff
 
 All original phases 0–9 remain **PARTIAL**, pending their complete end-to-end acceptance criteria. See [Phase and release audit](MASTER_PLAN_STAGE_AUDIT.md), [Firebase Hosting web.app checklist](WEBAPP_HOSTING_LAUNCH.md), and [Chrome extension integration contract](CHROME_EXTENSION_INTEGRATION.md). No live Firebase Hosting URL has been verified; feature contracts are not evidence of a production-ready website or extension.
+
+
+## Added architecture foundation gate — before private data activation
+
+- [x] Append Master Plan v1.6 and add [Architecture/AI Efficiency](ARCHITECTURE_DATA_AI_EFFICIENCY_SPEC.md), [Canonical Database](DATABASE_CANONICAL_SCHEMA.md) and [Integrated Pipeline/Phases](INTEGRATED_PIPELINE_AND_PHASE_GATES.md).
+- [ ] Ratify one canonical `users/{uid}` namespace and migration mapping from `sparkUsers`, `savedJobs`, `manualJobs` and `jobCvWorkspaces`; **not deployed**.
+- [ ] Approve a public/shared/user-private/restricted access matrix and rights-controlled job catalogue policy.
+- [ ] Remove the ability for ordinary Firestore clients to assert authoritative CV scores, QA approvals or AI usage. Review provisional `firestore.rules` thoroughly.
+- [ ] Add complete per-user schema, field/transition, cross-user and privilege-escalation emulator tests (including nested data and client score writes).
+- [ ] Implement indexed/paginated owner-scoped queries, idempotent job intake and revision/event histories on the agreed storage model.
+- [ ] Version JD/profile/evidence/rubric/model/template/cache inputs; add token/latency/cost ledger and spend limits for paid AI stages.
+- [ ] Benchmark accuracy with labelled jobs, evidence and exported one-page CVs, including 100-user simulation targets, retention and export/delete.
+- [ ] Verify monitored staging deployment/rollback and secure private-data handling before enabling private writes in production.
+
+**Status:** The owner verified live Firebase Hosting and Google sign-in on mobile, but **Firestore persistence, Functions-backed AI, CV uploads, Gmail and Chrome autofill remain unreleased.** Do not use open test-mode rules to satisfy the acceptance gate.
