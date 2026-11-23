@@ -10,7 +10,7 @@ export const sections = [
 export type SectionId = typeof sections[number]['id'];
 
 export function sectionForPath(path: string): SectionId {
-  const canonical = path.replace(/\\/+/g, '/').replace(/\\/$/, '') || '/';
+  const canonical = path.replace(/[/]+/g, '/').replace(/[/]$/, '') || '/';
   const exact = sections.find(section => section.path === canonical);
   if (exact) return exact.id;
   if (canonical === '/jobs' || canonical.startsWith('/jobs/')) return 'discover';
