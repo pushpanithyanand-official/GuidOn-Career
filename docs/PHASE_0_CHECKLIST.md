@@ -18,7 +18,8 @@ Master-plan source: [GuidOn Career Master Development Plan](GUIDON_CAREER_MASTER
 - [ ] Design and test *deny-by-default* Firestore and Storage access rules before any real CV or profile uploads.
 - [ ] Set billing alerts/budgets, basic error monitoring, rate/cost controls and retention choices.
 - [ ] Document lawful data handling, AI-processing disclosures, deletion/export boundaries and accepted file types.
-- [ ] Add CI for typecheck, build, tests, dependency scanning and deployment gate.
+- [x] Add GitHub Actions for typecheck, build and basic tests (pending CI verification).
+- [ ] Extend CI with dependency scanning, emulator security tests and a deployment gate.
 - [ ] Deploy a non-sensitive starter to the independent environment, test both desktop/mobile, and document rollback.
 
 ## Acceptance
