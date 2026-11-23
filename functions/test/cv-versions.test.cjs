@@ -18,7 +18,10 @@ test('real binary headers, readable text and document size are required', () => 
 test('one-page visual QA does not silently forgive two pages or misalignment', () => {
   const qa = { pageCount: 1, leftEdgeMaxDriftPt: 0.4, rightEdgeMaxDriftPt: 0.4,
     minimumBodyFontPt: 10.5, starBulletsComplete: true, starBulletsWithinTwoLines: true,
-    baseFormatReviewed: true, bodyText: text, inspectedFromRenderedOutput: true };
+    baseFormatReviewed: true, bodyText: text, inspectedFromRenderedOutput: true,
+    inspectedDocxStructure: true,
+    tableCount: 0, textBoxCount: 0, graphicsCount: 0,
+    headerFooterTextCount: 0, columnCount: 1 };
   assert.equal(validateCvQuality(qa).passed, true);
   assert.equal(validateCvQuality({ ...qa, pageCount: 2 }).passed, false);
   assert.equal(validateCvQuality({ ...qa, rightEdgeMaxDriftPt: 1.2 }).passed, false);
@@ -40,4 +43,20 @@ test('visible recruiter evidence must be present in rendered text and confirmed 
   assert.equal(absent.valid, false);
   const unknown = validateVisibleEvidenceClaims(text, claims, new Set());
   assert.equal(unknown.valid, false);
+});
+
+test('a hidden Word table or multi-column layout fails final release gate', () => {
+  const clean = { pageCount: 1, leftEdgeMaxDriftPt: 0.1, rightEdgeMaxDriftPt: 0.1,
+    minimumBodyFontPt: 11, starBulletsComplete: true, starBulletsWithinTwoLines: true,
+    baseFormatReviewed: true, inspectedFromRenderedOutput: true, inspectedDocxStructure: true,
+    tableCount: 0, textBoxCount: 0, graphicsCount: 0, headerFooterTextCount: 0,
+    columnCount: 1, bodyText: 'Managed account reconciliations: improved timeliness; met monthly deadlines.' };
+  assert.equal(validateCvQuality(clean).passed, true);
+  assert.ok(validateCvQuality({ ...clean, tableCount: 1 }).issues.includes('tables_prohibited'));
+  assert.ok(validateCvQuality({ ...clean, columnCount: 2 }).issues.includes('single_column_required'));
+  assert.ok(validateCvQuality({ ...clean, textBoxCount: 1 }).issues.includes('text_boxes_prohibited'));
+  const { cvQualityInputSchema } = require('../lib/cv-workflow.js');
+  assert.equal(cvQualityInputSchema.safeParse({
+    ...clean, inspectedDocxStructure: undefined,
+  }).success, false);
 });
