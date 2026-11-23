@@ -786,3 +786,55 @@ Retain in the user's private folder: original/cleaned JD, extraction/analysis re
 The CV engine is **not complete** until a fresh test candidate and JD can complete the staged workflow and approve a real one-page rendered DOCX/PDF, with both pre/post scores, a concise gap review, one user-requested rerun, verified metrics, and a full private audit folder. A separate account must be unable to access any part of the first user's folder or token history.
 
 **This addendum adds requirements; it does not claim that the current draft backend is deployed or that AI generation already works.**
+
+---
+
+# Addendum v1.3 — Creative CV Mode, ATS Structural Gate, Favourite Jobs and Smart Discovery
+
+**Added:** 23 November 2026. **Append-only:** Original master plan, Addendum v1.1 and v1.2 remain intact.
+
+## 25. User-selected “Think Creatively” before Make CV
+
+- Offer two modes **before** preparation: **Evidence First** (default) and **Think Creatively** (optional).
+- Creativity may vary framing, emphasis, action verbs, section priority, transferable-skills narrative, role focus and **descriptive functional department labels** where the user's verified work supports them.
+- It must never create or alter *official* employer names, legal job titles, actual departments presented as official, employment dates, education, qualifications, immigration or sponsorship claims, responsibility level, quantitative achievements or other historical facts.
+- A descriptive functional label such as “Finance Operations & Transformation Focus” may be suggested separately from the official department; do not claim it was the employer-assigned department unless independently verified.
+- Every material suggested rewrite must cite verified evidence, be shown as a change for user review, and require user approval when it changes meaning or terminology. An AI output alone cannot approve new career facts.
+- Both modes use exactly the same structured STAR evidence, short pre-CV gaps, Raw ATS and Recruiter Fit scores, document render gates, user comments, immutable revisions and audit/token history. Neither mode guarantees a score or employer shortlist.
+- Persist the selected mode in the private job workspace and record the change as an auditable event. Reruns may choose either mode without modifying the original base CV or source facts.
+
+## 26. No tables and enhanced ATS readability: absolute output rules
+
+- All **generated** CVs must contain **zero Word tables** (including layout tables and nested tables), **zero text boxes**, **one column only**, and no unnecessary graphics or header/footer-dependent content.
+- Do not align dates via tables. Use ordinary paragraphs, right-aligned tab stops or other parseable single-column text techniques and inspect the actual exported PDF alignment.
+- Where an uploaded base CV contains tables, columns or text boxes, preserve it unchanged as the source template, but create an ATS-safe adapted output for the selected application and disclose any necessary structural deviation.
+- Require editable DOCX and text-extractable PDF, both exactly one page with a minimum body font of 10 pt, measured section/date edge alignment, readable spacing and no clipped content.
+- In addition to PDF render inspection, inspect the generated DOCX OpenXML structure to ensure that no forbidden layout construct remains. Approval is blocked if it fails.
+
+## 27. Favourites, status timeline and separate user ownership
+
+Users must be able to save/unsave a job as a **favourite** independently of its current workflow status.
+
+Canonical stages: **Discovered, Interested, CV Preparing, CV Prepared, Applied, Applied + Connected, Rejected, Not Interested, Snoozed.**
+
+- The status is **per user**, not written back to a global shared job listing. Each change is timestamped with history; favourites never erase a status.
+- Applied and Applied + Connected require user confirmation or a verifiable authorised application event; the platform must never silently infer an external submission. Rejected must not be assumed from lack of response.
+- Dashboard counts and filters can aggregate the stages. “Active” excludes Rejected and Not Interested; Snoozed remains separately filterable.
+- Preserve state across browsers and mobile app for the same signed-in account. Reject stale multi-device state updates and support idempotent retries.
+
+## 28. Smart Sort and Filter & Sort discovery panel
+
+Smart Sort must be available on the main job-listings page and rank roles by the user's **confirmed** Career Intelligence Profile, target roles, preferred locations, recorded skills and relevant experience, with a small freshness tie-breaker. Without a confirmed profile, fall back transparently to Newest.
+
+- Explain high ranking with concise reasons such as “Target role match”, “Location match”, “Confirmed skills match”. **Smart Sort is not the Raw ATS Score or the Recruiter Fit Score.**
+- Never treat unknown work eligibility, salary or employer department as verified; show provenance. Any department inferred from a role title must be labelled **inferred**, not employer-verified.
+- Provide an integrated **Filter & Sort** panel inspired by the supplied screenshot: multi-value searchable include/exclude selectors for Company, Location, Department/Function, Designation; Discovery Category/Source; Existing Job Status; and Sort Jobs.
+- Include favourite-only filtering, keyword search, and available verified visa information. Existing future planned filters (including pay rate) are not removed.
+- Sort modes include Smart Sort/Best Matches, Newest, Oldest, Company, Designation, Location and Recently Changed Status.
+- Provide **Clear all** and **Apply filters** semantics; persist each user's own filter preferences.
+- **All filters must be applied across the full eligible job collection before pagination**, not merely to the current visible page. A temporary complete-scan implementation must fail visibly when its declared limit is exceeded; use a proper indexed discovery/search backend at scale.
+- Preserve job source URLs and posting provenance; do not imply that LinkedIn or an external ATS granted data extraction or scraping access.
+
+**UI ownership:** These are service/data/interaction requirements, not a mandate to retain the screenshot's colours, typography or exact component dimensions. The UI/UX designer remains free to create the presentation.
+
+**Detailed backend contracts:** [Job Discovery and Creative CV Mode Specification](JOB_DISCOVERY_CREATIVE_MODE.md) and [Strict CV Builder Specification](CV_BUILDER_STRICT_SPEC.md).
