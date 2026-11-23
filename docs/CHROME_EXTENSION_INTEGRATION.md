@@ -53,3 +53,16 @@ The Chrome extension, website/PWA, and optional native Android Preparation Brows
 ## Delivery order
 
 Website and base-CV profile → job capture and JD audit → generate/retrieve versioned CV → current-page autofill → manual application status sync. The UI/UX designer is free to choose page layouts; this document captures binding capabilities and security requirements.
+
+
+## Future relationship to Gmail application and interview intelligence
+
+The Gmail roadmap is **not an extension permission** and does **not** grant the extension access to email. See [Gmail Integration and Application & Interview Tracking](GMAIL_INTEGRATION_APPLICATION_TRACKING.md).
+
+- The extension may capture jobs, start or suggest a CV, recommend a saved CV, fill approved fields **on the current page only**, and record user-confirmed Applied/Connected milestones.
+- Later, independently consented Gmail processing may recognise an actual application confirmation, recruiter reply, assessment, interview or offer/rejection; that signal is matched to the **same application ID** that the website and extension use, rather than creating duplicate applications.
+- The Gmail tracker must never infer a submission merely because the extension filled a form or opened the employer's Apply page. Conversely, the extension must never auto-advance or submit because an email triggered an event.
+- Event provenance identifies whether a milestone is user-confirmed, extension-observed or email-inferred. Rejections, offers and ambiguous same-employer matches require explicit approval before consequential changes.
+- The legacy `clickNext()` routine remains disallowed. Gmail monitoring and Chrome host permissions require separate user authorisation.
+
+The extension migration remains pending and Gmail capability B is planned for later phases, not implemented in the first release.
