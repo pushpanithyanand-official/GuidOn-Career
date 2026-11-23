@@ -339,6 +339,15 @@ test('two signed-in users cannot read or change the other user’s career worksp
       const jobStateAfterSubmit = await alice.call('getMyJobDetails',{jobId:j2});
       assert.equal(jobStateAfterSubmit.userState.status,'applied');
       assert.equal((await bob.call('getMyJobDetails',{jobId:j2})).userState.status,'discovered');
+      const confirmedRejected = await alice.call('updateMyApplication', {
+        applicationId:j2,eventId:'550e8400-e29b-41d4-a716-446655440088',
+        expectedVersion:2,status:'rejected',userConfirmed:true,
+        note:'User confirmed employer rejection after interview.',
+      });
+      assert.equal(confirmedRejected.status,'rejected');
+      assert.equal((await alice.call('getMyJobDetails',{jobId:j2})).userState.status,'rejected');
+      assert.equal((await bob.call('getMyJobDetails',{jobId:j2})).userState.status,'discovered');
+      assert.equal((await alice.call('getMyApplicationTimeline',{applicationId:j2})).events.length,3);
 
       const workspaceRef = getAdminFirestore(admin).collection('users')
         .doc(alice.auth.currentUser.uid)
