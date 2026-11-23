@@ -1,6 +1,6 @@
 # GuidOn Career — Existing Chrome Extension Integration Contract
 
-**Status:** Backend bridge contract and manual vacancy ingestion implemented in draft PR. **The existing extension's actual Manifest V3 scripts are not present or verified in this GuidOn repository.** Do not mark Phase 8 complete until the existing extension has been ported, installed, and end-to-end tested.
+**Status:** Backend bridge contract and manual vacancy ingestion implemented in draft PR. **The existing Manifest V3 extension source has been located in the legacy repository, but is not present or integrated in GuidOn.** Do not mark Phase 8 complete until a carefully reviewed extension has been ported, installed, and end-to-end tested.
 
 ## Shared account, data and product flow
 
@@ -40,7 +40,10 @@ The Chrome extension, website/PWA, and optional native Android Preparation Brows
 
 ## Still needed to use the existing extension
 
-- Locate or supply the **existing Chrome extension source repository/bundle** and inspect its actual functionality. Do not mistake previous prototype work or another product's service for a GuidOn production integration.
+- **Located source:** [Legacy Manifest V3 extension](https://github.com/abhisheknair607-ux/automate_cv/tree/main/experimental/garamaal-autofill/extension), including `manifest.json`, `popup.js`, `mapping.js`, `matcher.js`, `reasoner.js` and `background.js`. Read-only inspection confirms working-oriented DOM scanning, side-panel matching and field filling logic, but **does not establish a working GuidOn release**.
+- **Mandatory migration fix:** Legacy `popup.js` defines `clickNext()` and an extension `nextBtn` that can click Next/Continue on an external page. Remove this functionality entirely rather than hiding it. Add extension regression tests prohibiting all programmatic navigation or submission.
+- **Legacy integration cleanup:** Old host permissions include unrelated `garamaal.web.app`, a local `127.0.0.1` AI endpoint and employer-specific hosts; `popup.js` accesses a candidate-specific local profile and `/api/autofill/candidate`. Replace these with owner-authenticated GuidOn APIs, explicit per-site host permissions and per-user Career Intelligence Profile/Answer Bank.
+- Reuse source only after reviewing its security, licensing, permission and behavior constraints. Extension code must not assume the website's Firebase Auth session or browser local storage is automatically available inside the extension.
 - Confirm Manifest V3, host permissions, activeTab use, extension authentication, strict content-script page isolation and browser-supported installation path.
 - Connect capture action to `captureMyJobFromAssistant`, exact job ID to CV workspace creation, approved CV downloads, and current-page-only autofill with form value verification.
 - Add an unobtrusive “Install Chrome Extension” link in the final UI once a verified distributable listing/approved enterprise installation is available. A public webpage cannot silently install an unpacked extension.
