@@ -109,3 +109,50 @@ export function validateVisibleRecruiterEvidence(
   }
   return { supported: missing.length === 0, missing };
 }
+
+/**
+ * Stable text representation for PRE-CV keyword scoring.
+ * Only user-confirmed career evidence is included; contact details, private
+ * eligibility specifics and unconfirmed numbers/stories are deliberately absent.
+ * The model is never allowed to choose or modify this scored text.
+ */
+export function confirmedProfileEvidenceText(rawProfile: unknown): string {
+  const profile = careerProfileSchema.parse(rawProfile);
+  const fragments: string[] = [];
+  const append = (...values: (string | undefined)[]) => {
+    for (const value of values) if (value?.trim()) fragments.push(value.trim());
+  };
+  append(profile.headline, profile.professionalSummary);
+  append(...profile.skills, ...profile.targetRoles);
+  for (const job of profile.experience) {
+    append(job.title, job.employer, ...job.highlights);
+    for (const metric of job.keyNumbers) {
+      if (metric.verification === 'user_confirmed') {
+        append(metric.label, String(metric.value), metric.unit, metric.context);
+      }
+    }
+    for (const story of job.starStories) {
+      if (story.verification === 'user_confirmed') {
+        append(story.situation, story.task, story.action, story.result);
+      }
+    }
+  }
+  for (const education of profile.education) {
+    append(education.institution, education.credential, education.fieldOfStudy,
+      ...education.highlights);
+    for (const metric of education.keyNumbers) {
+      if (metric.verification === 'user_confirmed') {
+        append(metric.label, String(metric.value), metric.unit, metric.context);
+      }
+    }
+    for (const story of education.starStories) {
+      if (story.verification === 'user_confirmed') {
+        append(story.situation, story.task, story.action, story.result);
+      }
+    }
+  }
+  for (const credential of profile.certifications) append(credential.name, credential.issuer);
+  for (const project of profile.projects) append(project.name, project.description, ...project.skills);
+  for (const achievement of profile.achievements) append(achievement.statement);
+  return fragments.join('\n').slice(0, 100_000);
+}
