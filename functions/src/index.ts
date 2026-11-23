@@ -3,7 +3,7 @@ import { getFirestore, FieldValue } from 'firebase-admin/firestore';
 import { getStorage } from 'firebase-admin/storage';
 import { onCall, HttpsError, type CallableRequest } from 'firebase-functions/v2/https';
 import { ZodError } from 'zod';
-import { cvUploadInput, completeCvInput, confirmProfileInput, cvStoragePath } from './contracts';
+import { cvUploadInput, completeCvInput, cvStoragePath } from './contracts';
 
 if (!getApps().length) initializeApp();
 
@@ -74,34 +74,12 @@ export const getMyWorkspace = onCall(settings, async request => {
   };
 });
 
-/** Save a user-approved profile; never promote an AI draft automatically. */
-export const confirmCareerProfile = onCall(settings, async request => {
-  const uid = uidFor(request);
-  const input = parse(confirmProfileInput, request.data);
-  const user = userDoc(uid);
-  if (input.sourceCvId) {
-    const source = await user.collection('baseCvs').doc(input.sourceCvId).get();
-    if (!source.exists || source.data()?.status !== 'uploaded') {
-      throw new HttpsError('failed-precondition', 'Base CV must belong to the signed-in user and be uploaded.');
-    }
-  }
-  const revision = user.collection('profileRevisions').doc();
-  const current = user.collection('profile').doc('current');
-  const data = {
-    data: input.profile,
-    state: 'user_confirmed',
-    confirmedAt: FieldValue.serverTimestamp(),
-    sourceCvId: input.sourceCvId ?? null,
-    revisionId: revision.id,
-    schemaVersion: 1,
-  };
-  const batch = db.batch();
-  batch.set(revision, data);
-  batch.set(current, data);
-  batch.set(user, { updatedAt: FieldValue.serverTimestamp(), onboardingStep: 'profile_confirmed' }, { merge: true });
-  await batch.commit();
-  return { revisionId: revision.id, state: 'user_confirmed' };
-});
+export {
+  saveMyProfileDraft,
+  getMyCareerProfile,
+  confirmCareerProfile,
+  listMyProfileRevisions,
+} from './profile-api';
 
 /** Upload is user-controlled; creates a bounded single-use storage slot, not AI processing. */
 export const beginBaseCvUpload = onCall(settings, async request => {
