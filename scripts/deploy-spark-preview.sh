@@ -28,12 +28,18 @@ fi
 
 # Release safety: do not activate the Functions-backed private workspace on Spark.
 export VITE_GUIDON_CORE_ENABLED=false
+# Explicit optional sign-in-only smoke test. Never enables Firestore or Functions.
+export VITE_GUIDON_AUTH_PREVIEW_ENABLED="${VITE_GUIDON_AUTH_PREVIEW_ENABLED:-false}"
+if [[ "$VITE_GUIDON_AUTH_PREVIEW_ENABLED" != "true" && "$VITE_GUIDON_AUTH_PREVIEW_ENABLED" != "false" ]]; then
+  echo "VITE_GUIDON_AUTH_PREVIEW_ENABLED must be true or false."
+  exit 2
+fi
 export VITE_FIREBASE_PROJECT_ID="$PROJECT_ID"
 export VITE_FIREBASE_AUTH_DOMAIN="$PROJECT_ID.firebaseapp.com"
 export VITE_FIREBASE_APP_ID="1:752868294981:web:1d58d1f90348e9cbd6fe2c"
 export VITE_FIREBASE_STORAGE_BUCKET="$PROJECT_ID.firebasestorage.app"
 
-echo "Building a public static preview. Private backends and CV uploads are disabled."
+echo "Building Spark preview. Auth-only mode: $VITE_GUIDON_AUTH_PREVIEW_ENABLED. Private backends and CV uploads are disabled."
 if [[ -f package-lock.json ]]; then
   npm ci --no-audit --no-fund
 else
