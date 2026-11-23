@@ -854,3 +854,85 @@ Smart Sort must be available on the main job-listings page and rank roles by the
 - The [Hosting launch checklist](WEBAPP_HOSTING_LAUNCH.md) and [Chrome extension integration contract](CHROME_EXTENSION_INTEGRATION.md) are additive implementation handoffs for the UI/UX designer and backend developer; neither claims live deployment.
 
 **Immediate acceptance order:** independent hosting and Auth → CV-first verified profile → live matching/gaps and strict CV generation → complete job/application workflow → optional connected Chrome extension → security/privacy/scaling sign-off. Features may be developed in parallel, but the core website must work without the extension.
+
+
+---
+
+# Addendum v1.4 — Unified Gmail Intelligence, Extension and Delivery Status
+
+**Recorded:** 23 November 2026. **Append-only:** this section builds on all previous sections, the original Phases 0–9, Addenda v1.1–v1.3 and the implementation checkpoint. Nothing already specified is removed or weakened.
+
+## 29. Two distinct, connected email capabilities
+
+The **first major email capability** is user-authorised Gmail **job-alert discovery and import**: recognise relevant LinkedIn/employer/recruiter alert messages, extract vacancy links and available details, deduplicate, and create or suggest a Discovery entry. A job alert does **not** mean an application was submitted.
+
+The **second major email capability** is the **Automated Application & Interview Tracking System**, a **future phase, not part of the initial implementation**. With separate explicit consent, the same connected Gmail account can detect:
+
+| Message signal | Intended future platform event | Confirmation requirement |
+| --- | --- | --- |
+| Job alert | Discovery job suggestion | No application state change |
+| Application received | Submitted application event | Correct application match; ask if ambiguous |
+| Application under review | In Review event | Sufficient employer and role evidence |
+| Assessment requested | Assessment task and deadline | Verify source, date and link |
+| Interview invitation | Interview Invited | Correct application match |
+| Interview scheduled | Interview Scheduled with date, time, timezone and meeting link | Ask about ambiguous dates/times |
+| Interview rescheduled | Update existing interview and retain prior appointment history | Identify original round reliably |
+| Recruiter reply | Recruiter Response or Action Needed | No inferred rejection/offer |
+| Rejection email | Propose Rejected | **Explicit user confirmation** |
+| Offer email | Potential Offer, then verified Offer Received | **Explicit user confirmation** |
+
+The resulting unified dashboard eventually presents **Jobs · Applications · Interviews · Offers**, with smart notifications, user-owned application timelines, assessments, interview rounds and later optional calendar integration.
+
+## 30. Intelligent Gmail-to-application matching and event integrity
+
+- Correctly link each message to a **specific application**, even where a user applied to several jobs at the same employer (e.g., multiple Microsoft vacancies). Compare application/requisition IDs, role title, sender/domain, email thread, employer ATS links, timeline and existing user-confirmed records.
+- Use explicit outcomes: **matched**, **needs user confirmation**, **unmatched** and **duplicate/ignored**. Never attach a message based only on company name.
+- Store immutable application events with source (`manual`, `extension`, `gmail`), event type, timestamps, matching evidence, confirmation status and safe message references. Current application status is derived from history, not overwritten without traceability.
+- Keep **job workflow statuses** (CV Preparing, CV Prepared, Applied, Applied + Connected, Rejected, Not Interested, etc.) separate from **employer application stages** (Submitted, Under Review, Assessment, Interview, Offer, Rejected). Synchronise intentionally to avoid contradicting states.
+- Distinguish a real application confirmation from newsletters, receipts and job alerts. Never infer a successful employer submission solely from viewing an apply page or filling an extension form.
+- Rejections, offers and ambiguous matches **must be confirmed by the user** before consequential application records change. A potential offer must not be treated as a confirmed offer or acceptance.
+- Make ingestion and status/event creation idempotent. Every correction and interview reschedule retains historical evidence. Allow manual corrections and unlinking of wrongly matched emails.
+
+## 31. Gmail connection architecture and future permissions
+
+The Gmail connection is **opt-in per user**. Separate choices allow job alerts only, application/interview tracking only, both or no email access. Forwarding selected alerts and a purpose-specific authorised Gmail API connection are alternatives to evaluate; neither allows silent forwarding creation or unrestricted mailbox access.
+
+Before launch, define appropriate minimal Google OAuth scopes and verification/security requirements, account identity mapping, renewal/revocation, encrypted server-side tokens, ingestion limits, least-data retention, retries, duplicate handling, export/delete and notifications. Email content is untrusted data, not executable commands. No marketing or recruiter correspondence should be sent on the user's behalf automatically.
+
+**Future Gmail roadmap (not implemented):** 1) job-alert authorisation/import; 2) receipt detection; 3) recruiter replies/status; 4) invitations and interview scheduling/rescheduling; 5) assessments/reminders; 6) offers/rejections with confirmation; 7) optional Calendar and interview preparation; 8) funnel and response analytics.
+
+Detailed requirements: [Gmail and Application & Interview Tracking Roadmap](GMAIL_INTEGRATION_APPLICATION_TRACKING.md). **Adding these requirements does not authorise connecting any user's Gmail or enable monitoring.**
+
+## 32. Chrome extension remains a first-class shared-platform companion
+
+The existing Manifest V3 extension prototype is located at [legacy Chrome extension source](https://github.com/abhisheknair607-ux/automate_cv/tree/main/experimental/garamaal-autofill/extension). It includes form inspection, field matching, autofill and a side panel, but is **not yet ported into GuidOn**.
+
+**Required end-to-end capabilities:** Capture Job (employer, title, location, JD and URL) → save to the owner's job database with deduplication → Make CV using the staged JD/profile/gaps workflow → recommend an appropriate existing or new CV → current-page-only autofill using verified profile/Answer Bank → candidate-confirmed application events synced to the platform.
+
+**Absolute boundary:** Never programmatically click **Next, Continue, Apply or Submit**. The user reviews fields, manually advances across pages and submits personally. The old extension's `clickNext()` control must be **removed**, not merely hidden; legacy account-specific and local-AI integrations must be replaced with secure per-user GuidOn backend calls. The website/PWA, extension and future mobile Career Browser use one private career profile, job collection, versioned CV history and application/event timeline; a PWA does not itself provide third-party-page DOM access.
+
+Gmail future tracking may corroborate or suggest later updates to the **same** application after the user applies using the extension; it must not create a duplicate record from an emailed receipt. Detailed migration contract: [Chrome Extension Integration](CHROME_EXTENSION_INTEGRATION.md).
+
+## 33. Current stage and `web.app` release truth
+
+The 23 November 2026 source-plan acceptance audit remains authoritative. **All Phases 0–9 are PARTIAL; none is signed off end-to-end.** Specific progress:
+
+| Area | Current implementation state |
+| --- | --- |
+| Project and Firebase Hosting foundation | Code/config prepared; independent live project and `web.app` address not verified |
+| User identity and Career Intelligence Profile | Authenticated backend/profile drafts tested; real sign-in, CV-first upload/AI extraction pending |
+| Dashboard and installable PWA | Temporary responsive shell/PWA configuration; live functional screens pending |
+| Job discovery, favourites, Smart Sort | Backend contracts and manual/assistant intake foundation; real permitted feeds and scale search pending |
+| JD understanding, gaps, pre/post ATS and Recruiter Fit | Validated backend functions/contracts; real AI matching/generation pending |
+| One-page CV rendering, STAR, no tables and versioning | Render-QA/immutable version foundations; live template-aware CV engine pending |
+| Application tracking | Per-user job choices and events partly implemented; full interview/application entities and analytics pending |
+| Chrome extension and mobile browser | Existing legacy source located, shared capture bridge defined; production migration pending |
+| Gmail alert import | **Planned**; no Gmail API OAuth or forwarding integration running |
+| Gmail application/interview intelligence | **Future**; no email-derived status/interview automation running |
+| Multi-user production security and scale | Local emulator tests; production security, privacy and operational gates pending |
+
+**One universal future entrypoint** will be an actual independently provisioned Firebase Hosting `https://<confirmed-site-id>.web.app` URL for desktop, browser/mobile PWA, with links to an independently installed Chrome extension and optional native Android browser. **No live `web.app` address is verified yet.** The protected Hosting-only deployment workflow does not enable Gmail reading, CV uploads, production Firebase rules or extension installation.
+
+**Execution priority:** isolated Firebase Hosting/Auth → CV-first profile and safe document intake → real staged CV engine → job/application records → integrated Chrome extension → optional Gmail job-alert intake → **later** automated application/interview email tracking → calendar/analytics, with security/consent milestones at each phase. The UI/UX designer remains free to redesign all screens while using these shared backend contracts.
+
+See [Phase Acceptance Audit](MASTER_PLAN_STAGE_AUDIT.md), [Hosting Launch Plan](WEBAPP_HOSTING_LAUNCH.md), [CV Builder Strict Specification](CV_BUILDER_STRICT_SPEC.md), and [Gmail Tracking Roadmap](GMAIL_INTEGRATION_APPLICATION_TRACKING.md).
