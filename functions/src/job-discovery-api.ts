@@ -70,14 +70,22 @@ export const getMyJobListings = onCall(settings, async request => {
   const user = db.collection('users').doc(uid);
   // Entire available candidate pool first, then filter/sort, then paginate.
   // A scan beyond beta limits fails visibly, rather than displaying incomplete matches.
-  const [catalog, personal, profileDocument] = await Promise.all([
+  const [catalog, manuallyAdded, personal, profileDocument] = await Promise.all([
     scanComplete(db.collection('jobCatalog')),
+    scanComplete(user.collection('manualJobs')),
     scanComplete(user.collection('savedJobs')),
     user.collection('profile').doc('current').get(),
   ]);
+  if (catalog.length + manuallyAdded.length > MAX_CATALOG_SCAN) {
+    throw new HttpsError('resource-exhausted', 'The combined job index requires scalable search before more results can be listed.');
+  }
   const owned = new Map(personal.map(doc => [doc.id, doc.data()]));
-  const rows: JobWithState[] = catalog.map(doc => {
-    const record = jobListingSchema.parse({ ...doc.data(), id: doc.id });
+  const rows: JobWithState[] = [...catalog, ...manuallyAdded].map(doc => {
+    const raw = doc.data();
+    const { originalJd: _originalJd, ownerUid: _ownerUid,
+      userSource: _userSource, verifiedByEmployer: _verifiedByEmployer,
+      createdAt: _createdAt, ...publicFields } = raw;
+    const record = jobListingSchema.parse({ ...publicFields, id: doc.id });
     const candidate = owned.get(doc.id);
     const userState = jobUserStateSchema.parse({
       status: candidate?.status ?? 'discovered',
@@ -100,7 +108,7 @@ export const getMyJobListings = onCall(settings, async request => {
     page: input.page, pageSize: input.pageSize,
     hasMore: start + input.pageSize < ordered.length,
     filtersAppliedBeforePagination: true,
-    searchScope: 'complete_catalog_up_to_5000',
+    searchScope: 'complete_public_and_personal_catalog_up_to_5000',
     smartSortUsedConfirmedProfile: input.sort === 'smart_match' && profile !== null,
     sortFallback: input.sort === 'smart_match' && !profile ? 'newest' : null,
     facets: getJobFilterFacets(rows),
@@ -118,13 +126,16 @@ export const setMyJobDecision = onCall(settings, async request => {
   }
   const db = getFirestore();
   const job = db.collection('jobCatalog').doc(input.jobId);
+  const manualJob = db.collection('users').doc(uid).collection('manualJobs').doc(input.jobId);
   const doc = db.collection('users').doc(uid).collection('savedJobs').doc(input.jobId);
   const event = doc.collection('events').doc(input.changeId);
   return db.runTransaction(async tx => {
-    const [source, previous, change] = await Promise.all([
-      tx.get(job), tx.get(doc), tx.get(event),
+    const [source, privateSource, previous, change] = await Promise.all([
+      tx.get(job), tx.get(manualJob), tx.get(doc), tx.get(event),
     ]);
-    if (!source.exists) throw new HttpsError('not-found', 'Job not found in the current catalog.');
+    if (!source.exists && !privateSource.exists) {
+      throw new HttpsError('not-found', 'Job not found in your accessible catalog.');
+    }
     if (change.exists) {
       if (change.data()?.payloadHash !== JSON.stringify(input)) {
         throw new HttpsError('already-exists', 'Change ID belongs to a different action.');
