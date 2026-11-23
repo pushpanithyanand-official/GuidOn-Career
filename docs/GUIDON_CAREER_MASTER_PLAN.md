@@ -992,3 +992,14 @@ See [Firebase Project Setup](FIREBASE_PROJECT_SETUP.md) and [Hosting Launch Plan
 The repository now contains an owner-run, project-bound **Spark-compatible static preview** script: `scripts/deploy-spark-preview.sh`, documented in [Firebase Hosting Launch](WEBAPP_HOSTING_LAUNCH.md). It runs frontend build/tests and deploys **Hosting only** under an interactive Google identity with exact project `guidon-career-fcda2`. It requires explicit release confirmation and forces `VITE_GUIDON_CORE_ENABLED=false`. The separate GitHub Actions OIDC workflow remains the intended protected route for later production releases.
 
 **Not yet complete:** No first Hosting release has been verified in the console; no private Functions-backed account/profile/CV workflow is live on Spark; no Gmail permissions or application automation are activated. The core application's security, CV-first upload, AI generation, extension integration and earlier phase acceptance requirements are unchanged.
+
+
+---
+
+## Owner-reported live static Hosting and Spark authentication-only acceptance gate
+
+**23 November 2026 — Infrastructure progress, append-only.** The owner reports that GuidOn's first static Firebase Hosting release was successfully published under project `guidon-career-fcda2`. The site has the default `https://guidon-career-fcda2.web.app` domain. The deployment is **owner-reported**, not independently verified from this environment. It is only a static preview; private Career Intelligence Profile, job data, CV generation, and Gmail are not live.
+
+The development branch now supports a separate **Firebase Authentication-only smoke test** on Spark, explicitly enabled by `VITE_GUIDON_AUTH_PREVIEW_ENABLED=true` during owner-authorised build/deploy. It tests Google/email/password signup/login and sign-out using Firebase's web SDK **without** calling undeployed Cloud Functions, changing Firestore/Storage rules or collecting CV files. The script always forces `VITE_GUIDON_CORE_ENABLED=false`, and its default remains a static preview. This Auth-only upgrade is **not yet claimed to be deployed**, and the profile/backend phase remains incomplete.
+
+See [Hosting launch and Auth smoke test instructions](WEBAPP_HOSTING_LAUNCH.md). Next secure data milestone: separately designed and tested owner-scoped Firestore rules, followed by staged profile/job persistence or an approved Blaze Functions backend; no public test-mode database rules.
