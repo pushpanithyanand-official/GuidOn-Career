@@ -192,12 +192,24 @@ export const cvQualityInputSchema = z.object({
   baseFormatReviewed: z.boolean(),
   bodyText: z.string().max(30_000),
   inspectedFromRenderedOutput: z.literal(true),
+  // Independently inspected from the generated DOCX OpenXML, not guessed from PDF.
+  inspectedDocxStructure: z.literal(true),
+  tableCount: z.number().int().nonnegative(),
+  textBoxCount: z.number().int().nonnegative(),
+  graphicsCount: z.number().int().nonnegative(),
+  headerFooterTextCount: z.number().int().nonnegative(),
+  columnCount: z.number().int().min(1),
 }).strict();
 
 export function validateCvQuality(raw: z.infer<typeof cvQualityInputSchema>) {
   const report = cvQualityInputSchema.parse(raw);
   const issues: string[] = [];
   if (report.pageCount !== 1) issues.push('one_page_required');
+  if (report.tableCount !== 0) issues.push('tables_prohibited');
+  if (report.columnCount !== 1) issues.push('single_column_required');
+  if (report.textBoxCount !== 0) issues.push('text_boxes_prohibited');
+  if (report.graphicsCount !== 0) issues.push('graphics_prohibited');
+  if (report.headerFooterTextCount !== 0) issues.push('contact_and_content_in_main_body_only');
   if (report.leftEdgeMaxDriftPt > 1 || report.rightEdgeMaxDriftPt > 1) issues.push('unaligned_page_edges');
   if (report.minimumBodyFontPt < 10) issues.push('font_too_small');
   if (!report.starBulletsComplete) issues.push('star_evidence_incomplete');
