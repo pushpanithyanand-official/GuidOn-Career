@@ -196,6 +196,7 @@ export { previewMyJdReview, confirmMyJdReview } from './cv-jd-api';
 
 export {
   getMyJobListings,
+  getMyJobDetails,
   setMyJobDecision,
   getMyJobTimeline,
   saveMyJobFilters,
