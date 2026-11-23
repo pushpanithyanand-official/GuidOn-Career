@@ -69,3 +69,17 @@ The Firebase CLI configuration includes local Auth, Firestore, Functions and Sto
 7. Privacy, export/deletion, abuse controls, emulator tests, monitoring and costs.
 
 No application screen or visual component in the current starter is the source of truth for future product design.
+
+### Multi-user emulator verification
+
+The CI security job builds the backend and starts Firebase Auth, Firestore, Storage and Functions emulators using the fake `demo-guidon-career-security` project. It runs private rules and authenticated two-account API tests; no cloud project or personal CV is needed.
+
+To reproduce locally, install Node.js 22, Java 21 and Firebase CLI, then run:
+
+```bash
+npm install --prefix functions
+npm run build --prefix functions
+firebase emulators:exec --only auth,firestore,functions,storage --project demo-guidon-career-security "npm run test:security --prefix functions && npm run test:api --prefix functions"
+```
+
+**Safety:** `CV_UPLOADS_ENABLED` is disabled by default; do not set it to true unless isolated cloud storage, security tests, scanning, retention and explicit consent are ready. The current production-bound `storage.rules` remains deny-all.
