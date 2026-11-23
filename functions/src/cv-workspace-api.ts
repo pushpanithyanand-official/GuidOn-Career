@@ -299,16 +299,20 @@ export const getMyCvWorkspaceReport = onCall(settings, async request => {
     tokenCounter: counters,
     tokenCounterByVersion: usageByVersion.docs
       .filter(doc => doc.id !== 'all')
-      .map(doc => ({ cvVersionId: doc.id === 'pre_cv' ? null : doc.id, ...doc.data() }))
-      .map(item => ({
-        cvVersionId: item.cvVersionId,
-        requests: item.requests ?? 0, inputTokens: item.inputTokens ?? 0,
-        outputTokens: item.outputTokens ?? 0, totalTokens: item.totalTokens ?? 0,
-        cachedInputTokens: item.cachedInputTokens ?? 0,
-        reasoningOutputTokens: item.reasoningOutputTokens ?? 0,
-        estimatedUsd: Math.round((item.estimatedUsd ?? 0) * 1_000_000) / 1_000_000,
-        unpricedRequests: item.unpricedRequests ?? 0,
-      })),
+      .map(doc => {
+        const usageStats = doc.data();
+        return {
+          cvVersionId: doc.id === 'pre_cv' ? null : doc.id,
+          requests: usageStats.requests ?? 0,
+          inputTokens: usageStats.inputTokens ?? 0,
+          outputTokens: usageStats.outputTokens ?? 0,
+          totalTokens: usageStats.totalTokens ?? 0,
+          cachedInputTokens: usageStats.cachedInputTokens ?? 0,
+          reasoningOutputTokens: usageStats.reasoningOutputTokens ?? 0,
+          estimatedUsd: Math.round((usageStats.estimatedUsd ?? 0) * 1_000_000) / 1_000_000,
+          unpricedRequests: usageStats.unpricedRequests ?? 0,
+        };
+      }),
     tokenUsageEvents: tokenEntries.docs.map(doc => ({
       id: doc.id, stage: doc.data().usage.stage, model: doc.data().usage.model,
       cvVersionId: doc.data().usage.cvVersionId ?? null,
