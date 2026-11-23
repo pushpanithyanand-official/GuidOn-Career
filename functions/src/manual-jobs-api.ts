@@ -6,7 +6,7 @@ import { jobListingSchema } from './job-discovery';
 
 const settings = { region: 'europe-west1' as const, maxInstances: 3, memory: '256MiB' as const };
 const ident = z.string().uuid();
-const suppliedJobSchema = z.object({
+export const suppliedJobSchema = z.object({
   clientRequestId: ident,
   company: z.string().trim().min(2).max(200),
   designation: z.string().trim().min(2).max(200),
@@ -51,9 +51,11 @@ function stableUuid(identity: string) {
   const hex = bytes.toString('hex');
   return [hex.slice(0, 8), hex.slice(8, 12), hex.slice(12, 16), hex.slice(16, 20), hex.slice(20)].join('-');
 }
-export const addMyManualJob = onCall(settings, async request => {
-  const uid = owner(request);
-  const input = parse(suppliedJobSchema, request.data);
+export async function saveUserProvidedJob(
+  uid: string, raw: unknown,
+  origin: 'manual_entry' | 'chrome_extension' | 'android_preparation_browser' | 'web_share' = 'manual_entry',
+) {
+  const input = parse(suppliedJobSchema, raw);
   const sourceUrl = cleanSourceUrl(input.sourceUrl);
   const dedupeKey = sourceUrl
     ? `url:${sourceUrl}`
@@ -69,7 +71,8 @@ export const addMyManualJob = onCall(settings, async request => {
     id: jobId, company: input.company, designation: input.designation,
     location: input.location,
     source: {
-      category: 'Manual', name: 'User-supplied vacancy',
+      category: origin === 'manual_entry' ? 'Manual' : 'Assistant Capture',
+      name: origin === 'manual_entry' ? 'User-supplied vacancy' : 'User-reviewed assistant capture',
       ...(sourceUrl ? { url: sourceUrl } : {}),
     },
     discoveredAt: now, summary: input.originalJd?.slice(0, 3000),
@@ -96,13 +99,16 @@ export const addMyManualJob = onCall(settings, async request => {
     tx.create(manual, {
       ...listing, originalJd: input.originalJd ?? null,
       verifiedByEmployer: false, ownerUid: uid,
-      userSource: 'manual_entry', createdAt: FieldValue.serverTimestamp(),
+      userSource: origin, createdAt: FieldValue.serverTimestamp(),
     });
     tx.create(requestRef, { jobId, payloadSha256, created: true,
       createdAt: FieldValue.serverTimestamp() });
     return { jobId, created: true, deduplicated: false };
   });
-});
+}
+
+export const addMyManualJob = onCall(settings, async request =>
+  saveUserProvidedJob(owner(request), request.data, 'manual_entry'));
 
 export const getMyManualJobDetails = onCall(settings, async request => {
   const uid = owner(request);
