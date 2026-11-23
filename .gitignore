@@ -13,3 +13,6 @@ coverage/
 functions/lib/
 functions/node_modules/
 .firebaserc
+
+# Generated PWA preview icons; rebuilds are deterministic
+public/icons/*.png
