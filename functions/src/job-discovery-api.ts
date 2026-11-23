@@ -124,14 +124,19 @@ export const setMyJobDecision = onCall(settings, async request => {
     throw new HttpsError('failed-precondition',
       'Explicit candidate confirmation is required for applications, connections and rejections.');
   }
+  if (input.status === 'rejected') {
+    throw new HttpsError('failed-precondition',
+      'Record rejection against the application timeline, not as an unlinked job-list change.');
+  }
   const db = getFirestore();
   const job = db.collection('jobCatalog').doc(input.jobId);
   const manualJob = db.collection('users').doc(uid).collection('manualJobs').doc(input.jobId);
+  const application = db.collection('users').doc(uid).collection('applications').doc(input.jobId);
   const doc = db.collection('users').doc(uid).collection('savedJobs').doc(input.jobId);
   const event = doc.collection('events').doc(input.changeId);
   return db.runTransaction(async tx => {
-    const [source, privateSource, previous, change] = await Promise.all([
-      tx.get(job), tx.get(manualJob), tx.get(doc), tx.get(event),
+    const [source, privateSource, existingApplication, previous, change] = await Promise.all([
+      tx.get(job), tx.get(manualJob), tx.get(application), tx.get(doc), tx.get(event),
     ]);
     if (!source.exists && !privateSource.exists) {
       throw new HttpsError('not-found', 'Job not found in your accessible catalog.');
@@ -149,6 +154,12 @@ export const setMyJobDecision = onCall(settings, async request => {
     });
     if (state.version !== input.expectedVersion) {
       throw new HttpsError('failed-precondition', 'Job state changed on another device. Refresh and retry.');
+    }
+    if (['applied', 'applied_connected'].includes(input.status ?? '') &&
+        (!existingApplication.exists ||
+         ['preparing', 'rejected', 'withdrawn'].includes(existingApplication.data()?.status))) {
+      throw new HttpsError('failed-precondition',
+        'Record a confirmed submitted application before setting Applied or Applied + Connected.');
     }
     const result = {
       status: input.status ?? state.status,
