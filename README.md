@@ -90,3 +90,16 @@ firebase emulators:exec --only auth,firestore,functions,storage --project demo-g
 The draft backend includes per-user favourites, application milestones (CV Preparing, CV Prepared, Applied, Applied + Connected, Rejected, Not Interested), status-event history, Smart Sort and the screenshot-inspired Filter & Sort API. It also includes an opt-in **Think Creatively** drafting mode, which changes truthful wording and emphasis but never alters unverified facts, real employers or official designations. Generated CVs must be single-column with **no tables**. The UI is intentionally left unchanged for the UI/UX designer.
 
 Read [Job Discovery and Creative Mode](docs/JOB_DISCOVERY_CREATIVE_MODE.md) and [Strict CV Builder Specification](docs/CV_BUILDER_STRICT_SPEC.md). Discovery ingestion, scalable search indexing and live CV AI generation are not implemented or deployed.
+
+## Master-plan acceptance audit and universal web app
+
+The source `GUIDON_CAREER_MASTER_PLAN (1).md` was audited against the draft GitHub backend. **None of Phases 0–9 or Releases A–E have reached all their user-facing exit criteria.** Several foundations and emulator tests have passed, but real authentication, CV-first AI extraction, an actual one-page CV generation run, full application tracking, and hosted deployment remain pending.
+
+- [Phase-by-phase acceptance audit](docs/MASTER_PLAN_STAGE_AUDIT.md)
+- [Manual Firebase web.app / PWA hosting setup](docs/WEBAPP_HOSTING_LAUNCH.md)
+- [Chrome extension integration and legacy-source inspection](docs/CHROME_EXTENSION_INTEGRATION.md)
+- [Strict staged CV-engine requirements](docs/CV_BUILDER_STRICT_SPEC.md)
+
+**Canonical website:** one verified Firebase Hosting `*.web.app` URL for desktop, mobile browser and installable PWA after an independently owned project has been provisioned and the manual Hosting-only workflow has run. **No real live URL has yet been verified.** The extension is an optional separately installed desktop companion using the same secure APIs; the PWA cannot inspect arbitrary external sites.
+
+The existing Manifest V3 autofill source was located in the legacy repository, but has **not** been ported to GuidOn. Its Next/Continue click automation and candidate-specific integration must be removed/replaced before release. No extension can automatically navigate or submit an employer application.
