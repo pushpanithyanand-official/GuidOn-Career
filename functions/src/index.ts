@@ -189,4 +189,5 @@ export {
   readMyCvAuditArtifact,
   submitMyCvGapFeedback,
   requestMyCvRevision,
+  approveMyCvVersion,
 } from './cv-workspace-api';
