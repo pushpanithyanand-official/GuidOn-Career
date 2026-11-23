@@ -10,7 +10,8 @@
     "build": "tsc",
     "check": "tsc --noEmit",
     "test": "npm run build && node --test test/contracts.test.cjs",
-    "test:security": "node --test test/security-emulator.test.cjs"
+    "test:security": "node --test test/security-emulator.test.cjs",
+    "test:api": "node --test test/api-emulator.test.cjs"
   },
   "dependencies": {
     "firebase-admin": "^13.0.0",
