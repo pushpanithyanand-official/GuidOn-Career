@@ -79,6 +79,8 @@ export const experienceSchema = z.object({
   id: z.string().uuid(),
   employer: short,
   title: short,
+  officialDepartment: short.optional(),  // Original employer-defined department, never AI rewritten.
+  functionalAreas: z.array(short).max(20).default([]), // Descriptive, evidenced work categories.
   location: z.string().trim().max(200).optional(),
   startDate: date.optional(),
   endDate: date.optional(),
