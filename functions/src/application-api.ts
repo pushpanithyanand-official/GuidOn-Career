@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { FieldValue, getFirestore } from 'firebase-admin/firestore';
 import { HttpsError, onCall, type CallableRequest } from 'firebase-functions/v2/https';
-import { ZodError, z } from 'zod';
+import { ZodError } from 'zod';
 import {
   createApplicationSchema, applicationStatusUpdateSchema,
   listApplicationsInput, applicationHistoryInput,
@@ -125,9 +125,13 @@ export const updateMyApplication = onCall(settings, async request => {
   const application = db.collection('users').doc(uid)
     .collection('applications').doc(input.applicationId);
   const event = application.collection('events').doc(input.eventId);
+  const savedJob = db.collection('users').doc(uid).collection('savedJobs').doc(input.applicationId);
+  const savedEvent = savedJob.collection('events').doc(input.eventId);
   const hash = sha(input);
   return db.runTransaction(async tx => {
-    const [current, duplicate] = await Promise.all([tx.get(application), tx.get(event)]);
+    const [current, duplicate, jobState, previousJobEvent] = await Promise.all([
+      tx.get(application), tx.get(event), tx.get(savedJob), tx.get(savedEvent),
+    ]);
     if (!current.exists) throw new HttpsError('not-found', 'This application does not belong to your account.');
     if (duplicate.exists) {
       if (duplicate.data()?.payloadSha256 !== hash) {
@@ -151,6 +155,29 @@ export const updateMyApplication = onCall(settings, async request => {
       ...(input.interview ? { nextInterview: input.interview } : {}),
       updatedAt: FieldValue.serverTimestamp(),
     });
+    // Job-card state is a derived summary, not a second independent application.
+    const old = jobState.data() ?? {};
+    const earlierStatus = old.status ?? 'applied';
+    const nextStatus = input.status === 'rejected' ? 'rejected'
+      : input.status === 'withdrawn' ? 'not_interested'
+      : earlierStatus === 'applied_connected' ? 'applied_connected' : 'applied';
+    const previousVersion = Number(old.version ?? 0);
+    tx.set(savedJob, {
+      jobId: input.applicationId, status: nextStatus,
+      version: previousVersion + 1, favorite: old.favorite === true,
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
+    if (!previousJobEvent.exists) {
+      tx.create(savedEvent, {
+        previous: { status: earlierStatus, favorite: old.favorite === true,
+          version: previousVersion },
+        result: { status: nextStatus, favorite: old.favorite === true,
+          version: previousVersion + 1 },
+        source: 'application', candidateConfirmed: true,
+        note: input.note ?? ('User confirmed: ' + input.status),
+        createdAt: FieldValue.serverTimestamp(),
+      });
+    }
     return { applicationId: input.applicationId, status: input.status,
       version: input.expectedVersion + 1, duplicate: false };
   });
