@@ -6,7 +6,7 @@ import {
   recruiterAssessmentSchema, scoreRawAtsKeywords, scoreRecruiterFit,
   scoreSnapshotSchema, cvQualityInputSchema, validateCvQuality, compactGapSchema,
 } from './cv-workflow';
-import { validateAtsKeywordsAgainstJd, validateRecruiterEvidence } from './cv-matching';
+import { validateAtsKeywordsAgainstJd, validateRecruiterEvidence, validateVisibleRecruiterEvidence } from './cv-matching';
 import { sha256Bytes } from './cv-audit';
 import { writeCvAuditArtifact, recordCvModelUsage } from './cv-workspace-api';
 
@@ -186,6 +186,14 @@ export async function recordCvScoreSnapshot(uid: string, workspaceId: string,
     if (savedVersion.data()?.profileRevisionId !== input.profileRevisionId ||
         savedVersion.data()?.textSha256 !== sha256Bytes(input.scoredText)) {
       throw new HttpsError('failed-precondition', 'Post-CV scores must use the exact saved CV text and profile revision.');
+    }
+    const representation = validateVisibleRecruiterEvidence(
+      input.recruiter, savedVersion.data()?.visibleEvidenceIds ?? [],
+    );
+    if (!representation.supported) {
+      throw new HttpsError('failed-precondition',
+        'Recruiter Fit cannot cite experience or achievements absent from the exported CV.',
+        representation.missing);
     }
     // The quality metrics must be the same ones registered with the rendered document.
     if (JSON.stringify(savedVersion.data()?.quality) !== JSON.stringify(input.quality)) {
