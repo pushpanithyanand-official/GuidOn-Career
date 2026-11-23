@@ -67,3 +67,20 @@ Re-audit each phase only after corresponding live acceptance evidence is attache
 ### Legacy extension discovery added to the audit
 
 The existing Manifest V3 source was located at [`abhisheknair607-ux/automate_cv/experimental/garamaal-autofill/extension`](https://github.com/abhisheknair607-ux/automate_cv/tree/main/experimental/garamaal-autofill/extension). It contains DOM form inspection and filling code, but also a `clickNext()` control and connections to the older candidate-specific platform. **Never port that Next/Continue automation**; remove it and verify only current-page, reviewed filling. The old source does **not** satisfy GuidOn Phase 8 until its code is adapted and tested with owner-authenticated GuidOn APIs.
+
+
+## Additive audit dimension — Gmail and integrated application events
+
+Master Plan **Addendum v1.4** introduces two distinct email capabilities that do **not** change the incomplete status of the original Phases 0–9.
+
+| Additional capability | Status | Release proof required |
+| --- | --- | --- |
+| Gmail job-alert consent and import | **PLANNED** | Account-authorised discovery, dedup, correct privacy/revoke behavior and no false Applied events |
+| Gmail automated application confirmation/recruiter matching | **FUTURE** | Correctly link multiple same-employer roles to application IDs and preserve source evidence |
+| Gmail interview invitations, scheduling and rescheduling | **FUTURE** | Timezone-safe appointment records and append-only reschedule history |
+| Gmail assessments, offers/rejections, notifications | **FUTURE** | Source verification, user-confirmed consequential changes, sensitive-data controls |
+| Optional Calendar and career analytics | **FUTURE** | Separate consent, reporting correctness and deletion/export controls |
+
+No Gmail OAuth connector, forwarding pipeline, email watch, email-status classifier or Calendar writer is implemented in this branch. UI/UX references must treat these as future features, not existing dashboard data. The linked [Gmail Tracking Roadmap](GMAIL_INTEGRATION_APPLICATION_TRACKING.md) describes the planned state/event matching model and consent boundaries.
+
+**Reminder:** The legacy extension's six target functions (Capture, Save, Make CV, Recommend CV, current-page Autofill, Track) remain a separate migration track. The extension is not complete until real GuidOn integration, authentication and **no Next/Continue/Submit** tests pass. The independent `web.app` address is still not verified.
