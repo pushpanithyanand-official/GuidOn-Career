@@ -50,3 +50,10 @@ Future website-to-extension handoff must use supported Chrome installation and s
 If the static release misbehaves, the authorised project owner reverts/redeploys the previous known-good Hosting release from Firebase Console (or redeploys the reviewed prior commit using the same manual workflow). Revoke deploy identities if compromised. Rollback of static Hosting does not imply restoration of private database contents; database changes are not performed by the Hosting-only workflow.
 
 **Current blocking dependency:** No independently owned GuidOn Firebase project, OIDC identity or verified live Hosting URL is connected to this chat. A `web.app` link must not be invented.
+
+
+## Update: owner-supplied Firebase project and functional core scaffold
+
+The owner has now supplied Firebase project ID **`guidon-career-fcda2`** and a **different** GCP project ID `guidon-career`. Earlier text describing a still-unknown independent Firebase project should be read as *project ownership and service configuration remain unverified*, not that the ID is unknown. The deploy workflows are now restricted to the exact Firebase ID. See [the concrete setup guide](FIREBASE_PROJECT_SETUP.md).
+
+There is now a signed-in core React scaffold and callable application model, but the website is intentionally feature-gated until the real Firebase Web App SDK values, sign-in providers, Firestore, Functions deployment and two-account smoke checks are verified. The protected Hosting workflow defaults to `VITE_GUIDON_CORE_ENABLED=false`. **No live default Hosting URL has been verified.**
