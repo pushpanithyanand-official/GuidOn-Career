@@ -192,7 +192,7 @@ export const createMyCvWorkspace = onCall(settings, async request => {
   const originalHash = sha256Bytes(input.originalJd);
   const ref = collection(uid).doc(workspaceId);
   const record = {
-    workspaceId, folderName,
+    workspaceId, folderName, jobId: input.jobId ?? null,
     company: input.company, designation: input.designation, location: input.location,
     sourceUrl: input.sourceUrl ?? null, baseCvId: input.baseCvId ?? null,
     originalJdSha256: originalHash,
@@ -208,11 +208,23 @@ export const createMyCvWorkspace = onCall(settings, async request => {
   }
   if (previous.exists && (previous.data()?.folderName !== folderName ||
     previous.data()?.sourceUrl !== (input.sourceUrl ?? null) ||
-    previous.data()?.baseCvId !== (input.baseCvId ?? null))) {
+    previous.data()?.baseCvId !== (input.baseCvId ?? null) ||
+    previous.data()?.jobId !== (input.jobId ?? null))) {
     throw new HttpsError('already-exists', 'The request ID already identifies a different application.');
   }
 
   if (!previous.exists) {
+    if (input.jobId) {
+      const [shared, privateJob] = await Promise.all([
+        getFirestore().collection('jobCatalog').doc(input.jobId).get(),
+        getFirestore().collection('users').doc(uid).collection('manualJobs').doc(input.jobId).get(),
+      ]);
+      const job = privateJob.exists ? privateJob.data() : shared.data();
+      if (!job || job.company !== input.company ||
+          job.designation !== input.designation || job.location !== input.location) {
+        throw new HttpsError('failed-precondition', 'CV workspace must match an accessible job in this account.');
+      }
+    }
     if (input.baseCvId) {
       const cv = await getFirestore().collection('users').doc(uid)
         .collection('baseCvs').doc(input.baseCvId).get();
@@ -280,6 +292,7 @@ export const getMyCvWorkspaceReport = onCall(settings, async request => {
   return {
     workspaceId,
     folderName: record.folderName,
+    jobId: record.jobId ?? null,
     company: record.company, designation: record.designation, location: record.location,
     stage: record.stage, stageVersion: record.stageVersion,
     generationMode: record.generationMode ?? 'evidence_first',
