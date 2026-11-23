@@ -15,7 +15,7 @@ Master-plan source: [GuidOn Career Master Development Plan](GUIDON_CAREER_MASTER
 
 - [ ] Create an independent GuidOn Career Firebase/GCP project, separate dev/prod environments and explicit project ownership.
 - [ ] Configure Firebase Hosting, Authentication and isolated storage while retaining least privilege.
-- [ ] Design and test *deny-by-default* Firestore and Storage access rules before any real CV or profile uploads.
+- [x] Add emulator tests for deny-by-default Firestore/Storage access plus owner-scoped candidate upload rules.\n- [ ] Complete production review and live cross-user testing before enabling any real CV uploads.
 - [ ] Set billing alerts/budgets, basic error monitoring, rate/cost controls and retention choices.
 - [ ] Document lawful data handling, AI-processing disclosures, deletion/export boundaries and accepted file types.
 - [ ] Add CI for typecheck, build, tests, dependency scanning and deployment gate.
