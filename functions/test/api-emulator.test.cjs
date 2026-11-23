@@ -92,6 +92,43 @@ test('two signed-in users cannot read or change the other user’s career worksp
     assert.equal(report.tokenCounter.totalTokens, 0);
     assert.equal(report.artifacts.length, 1);
     assert.equal(report.artifacts[0].category, 'jd_input');
+    const jdPreview = await alice.call('previewMyJdReview', { workspaceId: created.workspaceId });
+    assert.match(jdPreview.cleanedText, /financial forecasts/);
+    assert.equal(jdPreview.stageVersion, 0);
+    await assert.rejects(bob.call('previewMyJdReview', { workspaceId: created.workspaceId }),
+      error => error.code === 'functions/not-found');
+    await assert.rejects(alice.call('confirmMyJdReview', {
+      workspaceId: created.workspaceId,
+      reviewId: '550e8400-e29b-41d4-a716-446655440009',
+      expectedStageVersion: 0,
+      cleanedText: jdPreview.cleanedText,
+      requirements: [{
+        id: '550e8400-e29b-41d4-a716-446655440010',
+        text: 'CFA membership',
+        directJdQuote: 'CFA membership',
+        priority: 'required', validation: 'unconfirmed_extraction',
+      }],
+      keywords: [], confirmedByUser: true,
+    }), error => error.code === 'functions/failed-precondition');
+    const jdApproved = await alice.call('confirmMyJdReview', {
+      workspaceId: created.workspaceId,
+      reviewId: '550e8400-e29b-41d4-a716-446655440009',
+      expectedStageVersion: 0,
+      cleanedText: jdPreview.cleanedText,
+      requirements: [{
+        id: '550e8400-e29b-41d4-a716-446655440010',
+        text: 'Prepare financial forecasts',
+        directJdQuote: 'financial forecasts',
+        priority: 'required', validation: 'user_confirmed',
+      }],
+      keywords: [{ phrase: 'SQL', jdQuote: 'SQL, Excel and Power BI', importance: 'required' }],
+      confirmedByUser: true,
+    });
+    assert.equal(jdApproved.stage, 'profile_match');
+    assert.equal((await alice.call('getMyCvWorkspaceReport', {
+      workspaceId: created.workspaceId,
+    })).stage, 'profile_match');
+
     const audit = await alice.call('readMyCvAuditArtifact', {
       workspaceId: created.workspaceId, artifactId: report.artifacts[0].id,
     });
