@@ -66,3 +66,30 @@ The owner supplied the full Firebase JS Web App `firebaseConfig` on 23 November 
 The **site has not been deployed or verified**, Google/email Auth providers may still need enabling, and the Spark plan does not support the existing Firebase Functions deployment workflow. The protected Hosting-only workflow now explicitly builds **preview mode only** with `VITE_GUIDON_CORE_ENABLED=false`.
 
 Next console step is **Authentication → Sign-in method → Google / Email/Password**, followed by standard Hosting configuration, with private user data and callable functions still gated. See [project setup](FIREBASE_PROJECT_SETUP.md).
+
+
+## Owner-run Cloud Shell deployment — Hosting site now provisioned
+
+**New verified console state (23 November 2026):** The owner has created standard Firebase Hosting's default site in `guidon-career-fcda2`. The Firebase Console now lists `guidon-career-fcda2.web.app` and `guidon-career-fcda2.firebaseapp.com`, with the notice **“Waiting for your first release.”** Email/Password and Google sign-in providers are shown enabled in the owner's console. **No first website release is deployed yet.**
+
+The currently approved GitHub workflow still requires a protected OIDC deploy identity and main-branch review. For a simpler one-time **owner-authorized static preview** on Spark, the development branch contains `scripts/deploy-spark-preview.sh`. This pathway uses the owner's Cloud Shell Firebase login, targets the exact project, and forcibly disables the Functions-dependent private workspace.
+
+From the **Google Cloud Shell** terminal, opened under the owner's Google account:
+
+```bash
+git clone --depth 1 --branch feat/backend-foundation --single-branch \
+  https://github.com/pushpanithyanand-official/GuidOn-Career.git guidon-spark-preview
+cd guidon-spark-preview
+npx --yes firebase-tools@15.0.0 login --no-localhost
+bash scripts/deploy-spark-preview.sh DEPLOY_GUIDON_STATIC_PREVIEW
+```
+
+**Cautions:**
+- Authentication is interactive and must be completed by the owner. The CLI may already be logged in, in which case the login command can be skipped. Never send credential tokens to this chat.
+- The script performs `npm ci` (or `npm install` if no lockfile), typecheck, frontend tests, Vite build and **only** `firebase deploy --only hosting --project guidon-career-fcda2`.
+- It does **not** initialise a new Firebase project, deploy Functions, change database/storage security rules, request Gmail permissions, enable private CV uploads or alter a separate `guidon-career` Cloud project.
+- This is a **public static preview** at a permanent Hosting site, not a functional end-to-end authenticated GuidOn release. Do not enter candidate personal information into a placeholder or expect accounts/CVs to be stored.
+- After deploying, visit `https://guidon-career-fcda2.web.app` and confirm the preview, HTTPS and navigation. The Firebase Console's Previous releases list should show the new Hosting release.
+- If the owner wants to retain mandatory GitHub-environment reviewers for all future deploys, use the existing protected workflow after configuring OIDC rather than this manual preview route. The final production rollout should use the protected pipeline.
+
+The full private application is **still blocked** on a safe Spark-compatible data-access implementation or a later approved Blaze Functions deployment, in addition to secure CV extraction, document output, privacy and two-user live tests.
