@@ -12,7 +12,9 @@ const config = {
   appId: String(env.VITE_FIREBASE_APP_ID || ''),
 };
 const required = [config.apiKey, config.authDomain, config.projectId, config.appId];
-export const isFirebaseConfigured = required.every(Boolean);
+// Hosting can publish a static preview before authenticated backend release.
+export const isFirebaseConfigured =
+  required.every(Boolean) && env.VITE_GUIDON_CORE_ENABLED === 'true';
 
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
