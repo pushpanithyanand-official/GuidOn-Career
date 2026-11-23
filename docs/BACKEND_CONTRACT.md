@@ -183,3 +183,12 @@ The `getMyCvWorkspaceReport` tokenCounter is derived from transactional all-hist
 Task instructions for JD extraction, evidence matching, concise gap analysis, evidence-only one-page drafting and objective critique are defined in `functions/src/cv-prompts.ts`. The JD and uploaded CV are explicitly treated as untrusted data. They are not a running AI provider integration. Model scoring outputs are not accepted as final raw ATS or recruiter scores; independent backend calculations are authoritative.
 
 The current work is a **foundation**, not a completed live AI-to-DOCX workflow. Cloud storage enablement, provider integrations, secure binary download and real user CV template acceptance tests remain future implementation gates.
+
+
+## Additional discovery and pre-CV creative contracts
+
+The backend feature branch adds authenticated `getMyJobListings`, `setMyJobDecision`, `getMyJobTimeline`, `saveMyJobFilters`, `getMyJobFilters` and `setMyCvGenerationMode`. They are described with payloads, status codes, filter rules, source provenance and owner scope in [Job Discovery and Creative Mode](JOB_DISCOVERY_CREATIVE_MODE.md).
+
+The future designer can provide a **Filter & Sort** panel with searchable multi-select include/exclude for Company, Location, Department/Function and Designation; Discovery Category/Source; Existing Status; sorting; favourite-only; Clear all and Apply filters. Current backend filters run over the complete eligible small-beta catalog before pagination. Smart Sort ranks verified target roles/locations/skills and relevant history, not recruiting probabilities. Inferred departments must be visibly labelled as inferred.
+
+For CV generation, **Evidence First** is the default; **Think Creatively** is an opt-in, audit-recorded pre-draft selection. It permits evidence-grounded reframing and descriptive functional-area labels, never changes official employer/job title/qualifications or invents numbers. Every output still requires user feedback and one-page, no-tables DOCX and render QA.
