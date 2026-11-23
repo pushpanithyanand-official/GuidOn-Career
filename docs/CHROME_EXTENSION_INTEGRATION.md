@@ -66,3 +66,14 @@ The Gmail roadmap is **not an extension permission** and does **not** grant the 
 - The legacy `clickNext()` routine remains disallowed. Gmail monitoring and Chrome host permissions require separate user authorisation.
 
 The extension migration remains pending and Gmail capability B is planned for later phases, not implemented in the first release.
+
+
+## Canonical architecture and efficient integration (Addendum v1.6)
+
+The Chrome Manifest V3 extension remains a **not-yet-migrated** companion to the website, not a separate data store. Read [Architecture/AI Efficiency](ARCHITECTURE_DATA_AI_EFFICIENCY_SPEC.md), [Database/Migration](DATABASE_CANONICAL_SCHEMA.md) and [Unified Source/Pipeline](INTEGRATED_PIPELINE_AND_PHASE_GATES.md) before porting legacy code.
+
+- Use the verified current Auth UID and typed `JobIntakeService`, `CvWorkspaceService` and `ApplicationRepository` contracts. Existing role/JD captures create **one** per-user job and several provenance observations, with deduplication.
+- Reuse cached JD analysis where permitted and request only verified relevant profile/answer fields. Do not copy a full private profile, OAuth token, service credential, CV file or recruiter email into extension URLs/browser query strings.
+- Extension Save Job, Make CV, Recommend CV, Current-Page Autofill and user-confirmed Track all share `userJobId`, `workspaceId`, `approvedCvVersionId` and independent `applicationId`. Do not create parallel job/application status authority in local extension storage.
+- **Never** programmatically click Next, Continue, Apply or Submit; remove legacy `clickNext()` before release. Autofill is not a confirmed submission and may never create an Applied event by itself.
+- Scope DOM capture to supported, authorised pages and user actions, with source rights/provenance, idempotency, rate limits and consent controls. Broad unreviewed host permissions and local-AI endpoints are out of scope for secure GuidOn release.
