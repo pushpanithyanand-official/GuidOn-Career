@@ -11,6 +11,8 @@ export const cvUploadInput = z.object({
   sizeBytes: z.number().int().positive().max(MAX_BASE_CV_BYTES),
   // Separate storage permission from a future paid AI-extraction action.
   consentToStore: z.literal(true),
+  // Required idempotency key: retrying a request must not double-charge a quota.
+  clientRequestId: z.string().uuid(),
 }).strict().superRefine((value, context) => {
   const name = value.fileName.toLowerCase();
   const expected = value.mimeType === 'application/pdf' ? '.pdf' : '.docx';
