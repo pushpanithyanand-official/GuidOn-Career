@@ -7,6 +7,17 @@ export const userJobStatusSchema = z.enum([
   'applied', 'applied_connected', 'rejected', 'not_interested', 'snoozed',
 ]);
 export type UserJobStatus = z.infer<typeof userJobStatusSchema>;
+export const userJobStatusLabels: Record<UserJobStatus, string> = {
+  discovered: 'Discovered',
+  interested: 'Interested',
+  cv_preparing: 'CV Preparing',
+  cv_prepared: 'CV Prepared',
+  applied: 'Applied',
+  applied_connected: 'Applied + Connected',
+  rejected: 'Rejected',
+  not_interested: 'Not Interested',
+  snoozed: 'Snoozed',
+};
 
 export const jobListingSchema = z.object({
   id: z.string().uuid(),
