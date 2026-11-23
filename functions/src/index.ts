@@ -191,3 +191,5 @@ export {
   requestMyCvRevision,
   approveMyCvVersion,
 } from './cv-workspace-api';
+
+export { previewMyJdReview, confirmMyJdReview } from './cv-jd-api';
