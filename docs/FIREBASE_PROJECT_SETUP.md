@@ -80,3 +80,14 @@ Until these checks are met, **do not point the front end or Firebase Admin SDK a
 - Do not attempt to enable current authenticated backend pages simply by setting the frontend flag to true. Existing `getMyWorkspace` and other APIs depend on Functions, which are not deployed on the Spark plan. A dedicated, reviewed Spark-compatible access architecture or later Blaze upgrade is still required.
 
 The exact `https://guidon-career-fcda2.web.app` website remains **unverified** until an authorised Hosting deployment succeeds.
+
+
+## Architecture v1.6 gate before private Firestore data rollout
+
+The owner's published Hosting and Google login prove the Firebase Web App and Auth baseline, **not production-ready private data persistence**. Source documents in the development branch currently include `users/{uid}` Functions paths and `sparkUsers/{uid}` provisional Spark client paths. They must be reconciled into the canonical data contract in [Database Schema/Migration](DATABASE_CANONICAL_SCHEMA.md) before any live write rollout.
+
+Keep Firestore deny-by-default and do not publish unreviewed `firestore.rules`: protected model outputs/ATS scores, raw email/ATS source observations and security-sensitive transitions require stronger field-level authority and two-user emulator coverage. Direct Spark reads/writes should be restricted to validated owner-edited drafts and manually verified events; trusted AI, scanning and score assertions require an appropriately authorised secure backend.
+
+New design and build sequence: [Architecture/AI Efficiency](ARCHITECTURE_DATA_AI_EFFICIENCY_SPEC.md) → [Canonical Data/Migration](DATABASE_CANONICAL_SCHEMA.md) → [Integrated Pipeline and Phase Gates](INTEGRATED_PIPELINE_AND_PHASE_GATES.md) → independent two-user tests → separately approved release.
+
+The Firebase project remains `guidon-career-fcda2` and the owner's other GCP project `guidon-career` is not interchangeable.
