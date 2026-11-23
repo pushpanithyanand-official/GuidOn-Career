@@ -103,3 +103,10 @@ The source `GUIDON_CAREER_MASTER_PLAN (1).md` was audited against the draft GitH
 **Canonical website:** one verified Firebase Hosting `*.web.app` URL for desktop, mobile browser and installable PWA after an independently owned project has been provisioned and the manual Hosting-only workflow has run. **No real live URL has yet been verified.** The extension is an optional separately installed desktop companion using the same secure APIs; the PWA cannot inspect arbitrary external sites.
 
 The existing Manifest V3 autofill source was located in the legacy repository, but has **not** been ported to GuidOn. Its Next/Continue click automation and candidate-specific integration must be removed/replaced before release. No extension can automatically navigate or submit an employer application.
+
+
+## Future Gmail integration — separate from Chrome extension
+
+The user-approved roadmap contains two Gmail capabilities: (1) **job-alert discovery import** (planned) and (2) **automated application and interview tracking** (future), including receipt/recruiter matching, assessments, interview scheduling/rescheduling, user-confirmed offers/rejections, notifications and eventual Calendar/analytics. Neither has been connected or implemented.
+
+Read [Gmail Integration and Application & Interview Tracking](docs/GMAIL_INTEGRATION_APPLICATION_TRACKING.md), [Master Plan Addendum v1.4](docs/GUIDON_CAREER_MASTER_PLAN.md) and the [phase acceptance audit](docs/MASTER_PLAN_STAGE_AUDIT.md). The existing Chrome extension is still a separate migration; it will share the same application IDs, history, CVs and user profile. **No extension auto-Next/Continue/Submit is permitted.**
