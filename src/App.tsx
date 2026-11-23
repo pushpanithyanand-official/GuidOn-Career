@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import type { User } from 'firebase/auth';
 import { BriefcaseBusiness, CircleUserRound, Compass, FileText, LayoutDashboard, Menu, Settings2, UserRound, X, ArrowRight, ShieldCheck } from 'lucide-react';
 import { sections, sectionForPath, type SectionId } from './navigation';
 
@@ -24,7 +25,7 @@ function navigate(path: string) {
   window.dispatchEvent(new Event('guidon:navigate'));
 }
 
-export default function App() {
+export default function App({ user, onSignOut }: { user?: User; onSignOut?: () => Promise<void> }) {
   const [active, setActive] = useState<SectionId>(() => sectionForPath(window.location.pathname));
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -68,7 +69,7 @@ export default function App() {
         <header className="topbar">
           <button className="icon-button mobile-menu" aria-label="Open menu" onClick={() => setMenuOpen(true)}><Menu size={22} /></button>
           <span className="breadcrumb">Workspace <span>/</span> <strong>{selected.title}</strong></span>
-          <div className="topbar-right"><span className="preview-badge">Foundation preview</span><div className="avatar" aria-label="Account feature not yet available"><CircleUserRound size={21} /></div></div>
+          <div className="topbar-right"><span className="preview-badge">{user ? "Signed in" : "Static preview"}</span>{user && <span className="signed-in-email" title={user.email ?? ""}>{user.email}</span>}{onSignOut && <button className="signout-action" type="button" onClick={() => void onSignOut()}>Sign out</button>}<div className="avatar" aria-label={user ? "Signed-in account" : "Preview account"}><CircleUserRound size={21} /></div></div>
         </header>
         <main className="content">
           {active === 'dashboard' ? (
@@ -90,8 +91,10 @@ export default function App() {
                   <article className="feature-card"><div className="feature-number">03</div><div className="feature-symbol"><FileText size={23} /></div><h3>Stronger applications</h3><p>Create accurate, tailored CVs, then manage every application and outcome.</p><span>Coming in Phases 6–7</span></article>
                 </div>
               </section>
-              <section className="status-panel"><div><strong>Development status</strong><p>This is the Phase 0 interface preview. Account registration, uploads, job feeds and AI generation are not enabled yet.</p></div><span>Phase 0</span></section>
+              <section className="status-panel"><div><strong>Development status</strong><p>This workspace currently previews the upcoming CV-first journey. Sign-in is supported when Firebase is configured; CV uploads, job feeds and AI generation are not enabled yet.</p></div><span>Phase 0</span></section>
             </>
+          ) : active === "settings" && user ? (
+            <section className="page-intro"><span className="eyebrow">PHASE 1 · ACCOUNT</span><h1>Your account</h1><p>Your Firebase sign-in is active. Your career profile and documents will be stored privately when the next phase is implemented.</p><div className="account-detail"><h2>Account information</h2><dl><dt>Email</dt><dd>{user.email ?? "Not provided"}</dd><dt>Email verification</dt><dd>{user.emailVerified ? "Verified" : "Pending verification"}</dd><dt>Sign-in provider</dt><dd>{user.providerData.map(p => p.providerId).join(", ") || "Email and password"}</dd></dl><button type="button" className="secondary-action" onClick={() => void onSignOut?.()}>Sign out</button></div></section>
           ) : (
             <section className="page-intro">
               <span className="eyebrow">{comingSoon[active].phase} · PLANNED</span>
