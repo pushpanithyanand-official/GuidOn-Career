@@ -192,3 +192,12 @@ The backend feature branch adds authenticated `getMyJobListings`, `setMyJobDecis
 The future designer can provide a **Filter & Sort** panel with searchable multi-select include/exclude for Company, Location, Department/Function and Designation; Discovery Category/Source; Existing Status; sorting; favourite-only; Clear all and Apply filters. Current backend filters run over the complete eligible small-beta catalog before pagination. Smart Sort ranks verified target roles/locations/skills and relevant history, not recruiting probabilities. Inferred departments must be visibly labelled as inferred.
 
 For CV generation, **Evidence First** is the default; **Think Creatively** is an opt-in, audit-recorded pre-draft selection. It permits evidence-grounded reframing and descriptive functional-area labels, never changes official employer/job title/qualifications or invents numbers. Every output still requires user feedback and one-page, no-tables DOCX and render QA.
+
+
+## Planned email-to-application intelligence (NOT callable yet)
+
+The roadmap at [Gmail Integration and Application & Interview Tracking](GMAIL_INTEGRATION_APPLICATION_TRACKING.md) defines **Capability A: Job-alert intake** and **Capability B: Application & Interview Intelligence**. Neither has live Gmail APIs, background processing or callable endpoints yet. Do not generate UI code that assumes emails have already been imported or user accounts have already granted Gmail permissions.
+
+Future APIs/data contracts must support separately scoped user consent, per-user Gmail connection metadata and revocation, matched/unmatched/pending-review messages, immutable application events, interview appointments with timezone/reschedule history, task deadlines and source-specific verification. Email-derived offers and rejections **must never** be promoted without explicit user confirmation. A user may remain fully functional without connecting Gmail.
+
+Use the same application identifier for website/PWA, extension and email update flows; do not create isolated per-channel histories. The existing job workflow statuses are distinct from interview and employer-process stages. Design-stage mock data must be labelled examples.
