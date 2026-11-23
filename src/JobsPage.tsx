@@ -13,7 +13,7 @@ interface ListingsResponse {
   smartSortUsedConfirmedProfile: boolean; sortFallback: string|null;
   statusCounts: Record<string,number>;
 }
-interface DetailResponse { job: ListedJob; originalJd: string|null; isUserAdded: boolean }
+interface DetailResponse { job: ListedJob; originalJd: string|null; isUserAdded: boolean; userState: ListedJob['userState'] }
 
 const statusOptions = [
   ['discovered','Discovered'],['interested','Interested'],['cv_preparing','CV Preparing'],
