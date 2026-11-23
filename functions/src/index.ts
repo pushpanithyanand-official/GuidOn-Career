@@ -203,3 +203,5 @@ export {
 } from './job-discovery-api';
 
 export { setMyCvGenerationMode } from './cv-generation-mode-api';
+
+export { addMyManualJob, getMyManualJobDetails } from './manual-jobs-api';
