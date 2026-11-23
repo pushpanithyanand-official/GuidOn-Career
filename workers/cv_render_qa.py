@@ -70,16 +70,17 @@ def inspect_pdf(pdf_path: str) -> dict:
                 anchor = next((entry for entry in entries[i + 1:]
                                if abs(entry['top'] - line['top']) <= 3 and
                                entry['left'] >= line['right'] + 3), None)
+                # Modern DOCX generators commonly render bullet and sentence in
+                # a single PDF span. Inspect these too; never silently skip them.
                 if anchor is None:
-                    continue
+                    anchor = line
                 lines = 1
                 last_bottom = anchor['bottom']
-                seen_anchor = False
+                seen_anchor = anchor is line
                 for following in entries[i + 1:]:
-                    if following is anchor:
-                        seen_anchor = True
-                        continue
                     if not seen_anchor:
+                        if following is anchor:
+                            seen_anchor = True
                         continue
                     if BULLET.match(following['text']) or SECTION_HEADING.fullmatch(following['text']):
                         break
