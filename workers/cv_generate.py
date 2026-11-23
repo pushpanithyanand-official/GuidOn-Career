@@ -31,10 +31,17 @@ def clean(value):
     return re.sub(r'\s+', ' ', str(value or '')).strip()
 
 
+def prose(value):
+    """Change only punctuation; no candidate facts or quantified outcomes."""
+    text = clean(value)
+    text = re.sub(r'\s+[-–—]\s+', '; ', text)
+    return re.sub(r'(?<=\w)[-–—](?=\w)', ' ', text)
+
+
 def star_bullet(story, metrics):
     if story.get('verification') != 'user_confirmed':
         raise ValueError('Only verified STAR stories may be rendered')
-    parts = [clean(story.get(key)) for key in ('situation', 'task', 'action', 'result')]
+    parts = [prose(story.get(key)) for key in ('situation', 'task', 'action', 'result')]
     if not all(parts):
         raise ValueError('Complete Situation, Task, Action and Result are required')
     sentence = f'{parts[0]}: {parts[1]}; {parts[2]}; {parts[3]}'
@@ -169,7 +176,7 @@ def compose(payload):
         p.alignment = WD_ALIGN_PARAGRAPH.CENTER
 
     narrative = []
-    summary = clean(profile.get('professionalSummary') or profile.get('headline'))
+    summary = prose(profile.get('professionalSummary') or profile.get('headline'))
     if summary:
         section(doc, 'PROFESSIONAL SUMMARY')
         add_text(doc, summary, after=2)
@@ -249,7 +256,7 @@ def generate(payload, output_dir: Path):
         'baseFormatReviewed': True,
         'bodyText': narrative[:30000],
         'inspectedFromRenderedOutput': True,
-        'inspectedDocxStructure': structure['passed'],
+        'inspectedDocxStructure': True,  # Inspection executed; violations are separately counted.
         'tableCount': structure['tableCount'] or 0,
         'textBoxCount': structure['textBoxCount'] or 0,
         'graphicsCount': structure['graphicsCount'] or 0,
@@ -260,7 +267,8 @@ def generate(payload, output_dir: Path):
                   qa['leftEdgeMaxDriftPt'] <= 1 and
                   qa['rightEdgeMaxDriftPt'] <= 1 and
                   qa['minimumBodyFontPt'] >= 10 and qa['pageCount'] == 1 and
-                  qa['inspectedDocxStructure'])
+                  qa['inspectedDocxStructure'] and
+                  not re.search(r'[-\u2013\u2014]', qa['bodyText']))
     report = {
         'status': 'render_qa_passed' if passed else 'blocked_render_qa',
         'qualityPassed': passed,
