@@ -10,6 +10,7 @@ const validPdf = {
   mimeType: 'application/pdf',
   sizeBytes: 140000,
   consentToStore: true,
+  clientRequestId: '550e8400-e29b-41d4-a716-446655440000',
 };
 
 test('consented DOCX and PDF upload metadata validates', () => {
@@ -29,6 +30,7 @@ test('unsupported, oversized, misleading or unconsented files are rejected', () 
     { ...validPdf, fileName: 'resume.docx' },
     { ...validPdf, consentToStore: false },
     { ...validPdf, ownerUid: 'other-user' },
+    { ...validPdf, clientRequestId: '../another-user' },
   ];
   for (const item of bad) {
     assert.equal(cvUploadInput.safeParse(item).success, false);
@@ -54,4 +56,23 @@ test('document types use strict extension recognition', () => {
   assert.equal(cvTypeForName('resume.pdf'), 'application/pdf');
   assert.equal(cvTypeForName('Resume.DOCX'), 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
   assert.equal(cvTypeForName('resume.pdf.exe'), null);
+});
+
+test('work authorisation is explicit and does not infer sponsorship', () => {
+  const base = { profile: {
+    workEligibility: [{ country: 'Ireland', authorisedNow: 'unknown', sponsorshipNow: 'unknown', sponsorshipFuture: 'unknown' }],
+  }, userConfirmed: true, expectedRevisionId: null };
+  assert.equal(confirmProfileInput.safeParse(base).success, true);
+  assert.equal(confirmProfileInput.safeParse({
+    ...base,
+    profile: { workEligibility: [{ country: 'Ireland', authorisedNow: 'maybe' }] },
+  }).success, false);
+});
+
+test('profile drafts and version queries are bounded', () => {
+  const { saveProfileDraftInput, profileHistoryInput } = require('../lib/contracts.js');
+  assert.equal(saveProfileDraftInput.safeParse({ profile: { skills: ['Transfer Pricing'] } }).success, true);
+  assert.equal(saveProfileDraftInput.safeParse({ profile: { skills: ['X'.repeat(250)] } }).success, false);
+  assert.equal(profileHistoryInput.parse({}).limit, 10);
+  assert.equal(profileHistoryInput.safeParse({ limit: 200 }).success, false);
 });
