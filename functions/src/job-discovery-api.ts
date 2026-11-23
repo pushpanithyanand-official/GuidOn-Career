@@ -194,3 +194,29 @@ export const getMyJobFilters = onCall(settings, async request => {
     .collection('preferences').doc('jobFilters').get();
   return { filters: jobFilterSchema.parse(doc.data()?.filters ?? {}) };
 });
+
+/** Detail lookup supports private captured jobs and accessible shared listings, without exposing another user's JD. */
+export const getMyJobDetails = onCall(settings, async request => {
+  const uid = owner(request);
+  const payload = parse(z.object({ jobId: z.string().uuid() }).strict(), request.data);
+  const db = getFirestore();
+  const [privateJob, publicJob, state] = await Promise.all([
+    db.collection('users').doc(uid).collection('manualJobs').doc(payload.jobId).get(),
+    db.collection('jobCatalog').doc(payload.jobId).get(),
+    db.collection('users').doc(uid).collection('savedJobs').doc(payload.jobId).get(),
+  ]);
+  const source = privateJob.exists ? privateJob : publicJob;
+  if (!source.exists) throw new HttpsError('not-found', 'Job not found or not accessible for this account.');
+  const { originalJd, ownerUid: _uid, userSource: _source, verifiedByEmployer: _verified,
+    createdAt: _created, ...safeJob } = source.data()!;
+  return {
+    job: jobListingSchema.parse({ ...safeJob, id: payload.jobId }),
+    originalJd: privateJob.exists ? originalJd ?? null : null,
+    userState: jobUserStateSchema.parse({
+      status: state.data()?.status ?? 'discovered',
+      favorite: state.data()?.favorite ?? false,
+      version: state.data()?.version ?? 0,
+    }),
+    isUserAdded: privateJob.exists,
+  };
+});
