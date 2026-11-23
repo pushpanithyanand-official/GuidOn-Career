@@ -29,7 +29,7 @@ The UI must support **Clear all** (restore default filters) and **Apply filters*
 ## 2. Smart Sort
 
 An **explainable heuristic, not the Raw ATS or Recruiter Fit score**, currently uses:
-- Exact/partial target role overlap: up to 45 points
+- Exact/partial target role overlap: up to 40 points
 - Target-location match: 20 points
 - Confirmed skill tags matching job skill tags: up to 25 points
 - Relevant previous employment titles: up to 10 points
