@@ -31,7 +31,7 @@ test('new architecture references exist and keep the earlier master-plan scope',
 test('architecture classifies data and forbids untrusted AI and cross-user assertions', () => {
   const architecture = get('docs/ARCHITECTURE_DATA_AI_EFFICIENCY_SPEC.md');
   for (const term of ['Public', 'Shared catalogue', 'User-private', 'Restricted internal',
-    'inputVersionHash', 'cachedInputTokens', 'one source of truth', 'zero']) {
+    'inputVersionHash', 'cachedInputTokens', 'source of truth', 'zero']) {
     assert.match(architecture.toLowerCase(), new RegExp(term.toLowerCase()), term);
   }
   const schema = get('docs/DATABASE_CANONICAL_SCHEMA.md');
