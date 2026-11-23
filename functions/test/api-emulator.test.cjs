@@ -189,9 +189,42 @@ test('two signed-in users cannot read or change the other user’s career worksp
         catalog.doc(j2).set(job('Beacon','Tax Manager','Cork, Ireland','Linked Job Link','2026-11-22T09:00:00Z')),
         catalog.doc(j3).set(job('Alpha','Credit Analyst','Dublin, Ireland','Employer ATS','2026-11-23T09:00:00Z')),
       ]);
+      const manualInput = {
+        clientRequestId:'550e8400-e29b-41d4-a716-446655440030',
+        company:'Candidate Supplier', designation:'Private Finance Role',
+        location:'Galway, Ireland',
+        originalJd:'Own financial planning, reconciliation and financial analysis for a growing finance team with practical SQL proficiency.',
+        skills:['SQL'],
+      };
+      const added = await alice.call('addMyManualJob', manualInput);
+      assert.equal(added.created,true);
+      const again = await alice.call('addMyManualJob', manualInput);
+      assert.equal(again.jobId,added.jobId);
+      assert.equal(again.deduplicated,true);
+      const details = await alice.call('getMyManualJobDetails', { jobId:added.jobId });
+      assert.match(details.originalJd, /financial analysis/);
+      assert.equal(details.job.source.url,undefined);
+      await assert.rejects(bob.call('getMyManualJobDetails', { jobId:added.jobId }),
+        error => error.code === 'functions/not-found');
+      assert.equal((await bob.call('getMyJobListings', { filters:{statusPreset:'all'} }))
+        .jobs.some(x => x.id === added.jobId), false);
+      const personalFilter = await alice.call('getMyJobListings', {
+        filters:{ statusPreset:'all', company:{include:['Candidate Supplier'],exclude:[]}},
+      });
+      assert.equal(personalFilter.totalMatches,1);
+      assert.equal(personalFilter.jobs[0].id,added.jobId);
+      const manualInterested = await alice.call('setMyJobDecision', {
+        jobId:added.jobId, changeId:'550e8400-e29b-41d4-a716-446655440031',
+        expectedVersion:0, status:'interested',
+      });
+      assert.equal(manualInterested.status,'interested');
+      await assert.rejects(bob.call('setMyJobDecision',{
+        jobId:added.jobId, changeId:'550e8400-e29b-41d4-a716-446655440032',
+        expectedVersion:0, favorite:true,
+      }),error => error.code === 'functions/not-found');
       const allJobs = await alice.call('getMyJobListings', { sort:'newest', pageSize:1,
         filters: { statusPreset:'all' } });
-      assert.equal(allJobs.totalMatches,3);
+      assert.equal(allJobs.totalMatches,4);
       assert.equal(allJobs.jobs.length,1);
       assert.equal(allJobs.hasMore,true);
       assert.equal(allJobs.filtersAppliedBeforePagination,true);
