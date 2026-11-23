@@ -96,9 +96,24 @@ test('one-page rendering, aligned edges and STAR bullets are hard checks', () =>
   const clean = { pageCount: 1, leftEdgeMaxDriftPt: 0.5, rightEdgeMaxDriftPt: 0.5,
     minimumBodyFontPt: 10, starBulletsComplete: true, starBulletsWithinTwoLines: true,
     baseFormatReviewed: true, bodyText: 'Automated reporting: improved accuracy; saved 25% time.',
-    inspectedFromRenderedOutput: true };
+    inspectedFromRenderedOutput: true,
+    inspectedDocxStructure: true,
+    tableCount: 0, textBoxCount: 0, graphicsCount: 0,
+    headerFooterTextCount: 0, columnCount: 1 };
   assert.equal(validateCvQuality(clean).passed, true);
   assert.ok(validateCvQuality({ ...clean, pageCount: 2 }).issues.includes('one_page_required'));
   assert.ok(validateCvQuality({ ...clean, leftEdgeMaxDriftPt: 2 }).issues.includes('unaligned_page_edges'));
   assert.ok(validateCvQuality({ ...clean, starBulletsWithinTwoLines: false }).issues.includes('star_bullet_too_long'));
+});
+
+test('single-column no-tables DOCX structure is required for valid CV QA', () => {
+  const input = { pageCount: 1, leftEdgeMaxDriftPt: 0, rightEdgeMaxDriftPt: 0,
+    minimumBodyFontPt: 11, starBulletsComplete: true, starBulletsWithinTwoLines: true,
+    baseFormatReviewed: true, inspectedFromRenderedOutput: true, inspectedDocxStructure: true,
+    bodyText: 'Analysed budgets: strengthened reporting; delivered accurate insights.',
+    tableCount: 0, textBoxCount: 0, graphicsCount: 0, headerFooterTextCount: 0,
+    columnCount: 1 };
+  assert.equal(validateCvQuality(input).passed, true);
+  assert.equal(validateCvQuality({ ...input, tableCount: 1 }).passed, false);
+  assert.equal(validateCvQuality({ ...input, columnCount: 2 }).passed, false);
 });
