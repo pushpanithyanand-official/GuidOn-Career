@@ -29,3 +29,16 @@ test('public Web SDK configuration never silently activates undeployed private A
   assert.match(hosting, /deploy --only hosting/);
   assert.doesNotMatch(hosting, /deploy --only functions/);
 });
+
+test('Spark Auth smoke test cannot activate Cloud Functions or career data', () => {
+  const sdk = source('src/firebase.ts');
+  assert.match(sdk, /VITE_GUIDON_AUTH_PREVIEW_ENABLED === 'true'/);
+  assert.match(sdk, /if \(isFirebaseConfigured\) functions = getFunctions/);
+  const auth = source('src/auth.tsx');
+  assert.match(auth, /if \(next && isFirebaseConfigured\)/);
+  assert.match(auth, /SparkAuthPreview/);
+  assert.match(auth, /No career information has been saved by this test/);
+  const script = source('scripts/deploy-spark-preview.sh');
+  assert.match(script, /VITE_GUIDON_CORE_ENABLED=false/);
+  assert.match(script, /VITE_GUIDON_AUTH_PREVIEW_ENABLED/);
+});
