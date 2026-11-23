@@ -265,6 +265,29 @@ test('two signed-in users cannot read or change the other user’s career worksp
       await alice.call('saveMyJobFilters', { favoritesOnly:true, statusPreset:'all' });
       assert.equal((await alice.call('getMyJobFilters')).filters.favoritesOnly,true);
       assert.equal((await bob.call('getMyJobFilters')).filters.favoritesOnly,false);
+      const extensionCapture = {
+        sourceSurface:'chrome_extension', captureMethod:'visible_dom',
+        userReviewed:true, consentToStore:true,
+        job:{
+          clientRequestId:'550e8400-e29b-41d4-a716-446655440041',
+          company:'Extension Employer', designation:'Credit Risk Analyst',
+          location:'Dublin, Ireland',
+          sourceUrl:'https://jobs.example.test/credit-analyst',
+          originalJd:'Review counterparty risk and debt capacity, prepare credit memoranda and monitor portfolio exposure for financial services clients.',
+        },
+      };
+      const captured = await alice.call('captureMyJobFromAssistant', extensionCapture);
+      assert.equal(captured.sourceSurface,'chrome_extension');
+      assert.equal(captured.requiresUserControlledApply,true);
+      assert.equal((await alice.call('captureMyJobFromAssistant', extensionCapture)).jobId,captured.jobId);
+      const ownCapturedJob = await alice.call('getMyManualJobDetails', { jobId:captured.jobId });
+      assert.match(ownCapturedJob.originalJd,/counterparty risk/);
+      await assert.rejects(bob.call('getMyManualJobDetails', { jobId:captured.jobId }),
+        error => error.code === 'functions/not-found');
+      await assert.rejects(alice.call('captureMyJobFromAssistant',{
+        ...extensionCapture, userReviewed:false,
+      }),error => error.code === 'functions/invalid-argument');
+
 
       const workspaceRef = getAdminFirestore(admin).collection('users')
         .doc(alice.auth.currentUser.uid)
