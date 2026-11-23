@@ -8,6 +8,7 @@ WORKDIR /app
 COPY requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 COPY cv_render_qa.py /app/cv_render_qa.py
+COPY cv_generate.py /app/cv_generate.py
 RUN useradd -m cvworker
 USER cvworker
 ENTRYPOINT ["python", "/app/cv_render_qa.py"]
