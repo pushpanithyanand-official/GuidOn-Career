@@ -177,7 +177,9 @@ export default function JobsPage() {
       <div className="form-actions">
         {selected.job.source.url&&<a className="secondary-action" href={selected.job.source.url} target="_blank" rel="noopener noreferrer">Open official listing</a>}
         <button onClick={()=>{window.location.href='/cv-studio?job='+encodeURIComponent(selected.job.id);}}>Review JD / CV</button>
-        <button disabled={busy} onClick={()=>markApplied(selected.job)}>I submitted this application</button>
+        {!['applied','applied_connected','rejected'].includes(selected.userState.status)
+          ? <button disabled={busy} onClick={()=>markApplied(selected.job)}>I submitted this application</button>
+          : <a className="secondary-action" href="/applications">View application history</a>}
       </div>
       <div className="form-grid">
         <label>Status<select value={selected.userState.status} disabled={busy} onChange={e=>{
@@ -185,7 +187,8 @@ export default function JobsPage() {
           const confirmed=['applied','applied_connected','rejected'].includes(status);
           if(confirmed&&!window.confirm('Confirm this status is based on a real application event?'))return;
           decision(selected.job,{status},confirmed);
-        }}>{statusOptions.map(([key,label])=><option key={key} value={key}>{label}</option>)}</select></label>
+        }}>{statusOptions.map(([key,label])=><option key={key} value={key}
+            disabled={['applied','rejected'].includes(key) && selected.userState.status!==key}>{label}</option>)}</select></label>
       </div>
     </div>}
   </section>;
