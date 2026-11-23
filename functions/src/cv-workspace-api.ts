@@ -14,6 +14,7 @@ import { canTransitionCvStage, cvWorkflowStageSchema, gapFeedbackSchema } from '
 const settings = { region: 'europe-west1' as const, maxInstances: 3, memory: '256MiB' as const };
 const identifier = z.string().uuid();
 const lookupInput = z.object({ workspaceId: identifier }).strict();
+const artifactReadInput = lookupInput.extend({ artifactId: identifier }).strict();
 const gapInput = lookupInput.extend({
   feedbackId: identifier,
   expectedStageVersion: z.number().int().min(0),
@@ -329,4 +330,27 @@ export const requestMyCvRevision = onCall(settings, async request => {
     });
   });
   return { stage: 'revision_requested', revisionRequestId: input.revisionRequestId };
+});
+
+/** Owner-authenticated read of small immutable JSON/text inputs and outputs. */
+export const readMyCvAuditArtifact = onCall(settings, async request => {
+  const uid = uidFor(request);
+  const { workspaceId, artifactId } = validate(artifactReadInput, request.data);
+  const { ref } = await existingWorkspace(uid, workspaceId);
+  const manifest = await ref.collection('artifacts').doc(artifactId).get();
+  if (!manifest.exists) throw new HttpsError('not-found', 'Audit artifact not found for this application.');
+  const data = manifest.data()!;
+  if ((data.contentType !== 'application/json' && data.contentType !== 'text/plain') ||
+       data.byteLength > 250_000) {
+    throw new HttpsError('failed-precondition', 'This artifact requires a secure binary download method.');
+  }
+  const [content] = await getStorage().bucket().file(data.storagePath).download();
+  if (sha256Bytes(content) !== data.sha256) {
+    throw new HttpsError('data-loss', 'Stored artifact checksum does not match its manifest.');
+  }
+  return {
+    artifactId, category: data.category,
+    relativePath: data.path, contentType: data.contentType,
+    sha256: data.sha256, text: content.toString('utf8'),
+  };
 });
