@@ -246,9 +246,14 @@ test('two signed-in users cannot read or change the other user’s career worksp
         jobId:j1, changeId:'550e8400-e29b-41d4-a716-446655440025',
         expectedVersion:1, status:'applied_connected',
       }), error => error.code === 'functions/failed-precondition');
+      const realApplication = await alice.call('createMyApplication', {
+        jobId:j1, eventId:'550e8400-e29b-41d4-a716-446655440070',
+        status:'submitted', userConfirmed:true, submittedOn:'2026-11-23',
+      });
+      assert.equal(realApplication.status,'submitted');
       const applied = await alice.call('setMyJobDecision', {
         jobId:j1, changeId:'550e8400-e29b-41d4-a716-446655440026',
-        expectedVersion:1, status:'applied_connected', userConfirmed:true,
+        expectedVersion:2, status:'applied_connected', userConfirmed:true,
       });
       assert.equal(applied.status,'applied_connected');
       assert.equal(applied.favorite,true);
@@ -261,7 +266,7 @@ test('two signed-in users cannot read or change the other user’s career worksp
       assert.equal(favOnly.totalMatches,1);
       assert.equal(favOnly.jobs[0].id,j1);
       const timelines = await alice.call('getMyJobTimeline', {jobId:j1});
-      assert.equal(timelines.changes.length,2);
+      assert.equal(timelines.changes.length,3);
       await alice.call('saveMyJobFilters', { favoritesOnly:true, statusPreset:'all' });
       assert.equal((await alice.call('getMyJobFilters')).filters.favoritesOnly,true);
       assert.equal((await bob.call('getMyJobFilters')).filters.favoritesOnly,false);
@@ -307,7 +312,7 @@ test('two signed-in users cannot read or change the other user’s career worksp
         status:'submitted',userConfirmed:true,submittedOn:'2026-11-23',
       });
       assert.equal(duplicateApplication.duplicate,true);
-      assert.equal((await alice.call('listMyApplications')).applications.length,1);
+      assert.equal((await alice.call('listMyApplications')).applications.length,2);
       assert.equal((await bob.call('listMyApplications')).applications.length,0);
       await assert.rejects(bob.call('getMyApplicationTimeline',{applicationId:j2}),
         error => error.code === 'functions/not-found');
