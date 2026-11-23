@@ -58,6 +58,10 @@ export const getMyWorkspace = onCall(settings, async request => {
   ]);
   return {
     uid,
+    capabilities: {
+      cvUploadsEnabled: process.env.CV_UPLOADS_ENABLED === 'true',
+      aiProfileExtractionEnabled: false,
+    },
     account: {
       onboardingStep: userRecord.data()?.onboardingStep ?? 'upload_base_cv',
       schemaVersion: userRecord.data()?.schemaVersion ?? 1,
@@ -84,6 +88,9 @@ export {
 /** Create a short-lived, idempotent CV upload slot with per-user abuse limits. */
 export const beginBaseCvUpload = onCall(settings, async request => {
   const uid = uidFor(request);
+  if (process.env.CV_UPLOADS_ENABLED !== 'true') {
+    throw new HttpsError('failed-precondition', 'CV uploads are not enabled in this environment.');
+  }
   const input = parse(cvUploadInput, request.data);
   const user = userDoc(uid);
   const uploadId = input.clientRequestId;
