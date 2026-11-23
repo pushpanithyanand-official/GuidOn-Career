@@ -66,3 +66,17 @@ Until these checks are met, **do not point the front end or Firebase Admin SDK a
 - **No live release has been made**; the default `*.web.app` URL is a target, not a verified link.
 - Gmail alert imports, mailbox access, interview automation, Calendar writes, paid AI calls, base CV uploads and cross-page automatic application actions are **not activated**.
 - Nothing has been migrated from the legacy Garamaal or TaxLink systems or their private production datasets.
+
+
+## Web App registration update — confirmed from owner-supplied Firebase SDK snippet
+
+**Registered Web App:** the owner has now provided complete public browser SDK configuration for Firebase project `guidon-career-fcda2`, project number `752868294981`, Web App ID ending `cbd6fe2c`, and default Auth domain `guidon-career-fcda2.firebaseapp.com`.
+
+- Public client configuration is now checked into `src/firebase-web-config.ts`, including the optional measurement ID. The app reads it via `src/firebase.ts`. **Analytics is not automatically initialised.**
+- The Hosting build no longer requires manually re-entering Web App `apiKey`, `authDomain`, `appId` or storage bucket as GitHub variables. Those are browser-visible Firebase client identifiers, not server secrets.
+- The Hosting workflow still requires an approved, least-privilege **Google OIDC deployment identity**, project variable and a protected GitHub environment. It **forces `VITE_GUIDON_CORE_ENABLED=false` on Spark**; registering the Web App does not make Cloud Functions available.
+- **Next owner-side task:** Firebase Console → **Authentication** → **Get started** → **Sign-in method**, enable **Google** and **Email/Password**. Check the required authorized domains for the intended `web.app` origin and OAuth settings.
+- Then set up **standard Firebase Hosting**, not App Hosting, and confirm the default Hosting site. Firestore remains deny-all; **do not choose test-mode/open security rules** for personal profiles.
+- Do not attempt to enable current authenticated backend pages simply by setting the frontend flag to true. Existing `getMyWorkspace` and other APIs depend on Functions, which are not deployed on the Spark plan. A dedicated, reviewed Spark-compatible access architecture or later Blaze upgrade is still required.
+
+The exact `https://guidon-career-fcda2.web.app` website remains **unverified** until an authorised Hosting deployment succeeds.
