@@ -62,7 +62,10 @@ export async function recordCvPipelineStage(
   const event = workspace.collection('stageEvents').doc(input.stageRunId);
   const existing = await event.get();
   if (existing.exists) return { stage: existing.data()?.nextStage, stageRunId: input.stageRunId };
-  if (!canTransitionCvStage(input.previousStage, input.nextStage)) {
+  if (input.nextStage === 'approved') {
+    throw new HttpsError('failed-precondition', 'Only the signed-in user can approve a completed CV.');
+  }
+    if (!canTransitionCvStage(input.previousStage, input.nextStage)) {
     throw new HttpsError('failed-precondition', 'Stage progression would skip a mandatory review.');
   }
   const target = fileCategory(input.nextStage);
@@ -85,6 +88,11 @@ export async function recordCvPipelineStage(
         latest.data()?.stageVersion !== input.expectedStageVersion) {
       throw new HttpsError('failed-precondition', 'Application stage was updated elsewhere. Refresh before retrying.');
     }
+    if (input.nextStage === 'ready_for_user_approval' &&
+        (latest.data()?.latestCvQualityPassed !== true ||
+         !latest.data()?.latestScoredCvVersionId)) {
+      throw new HttpsError('failed-precondition', 'A rendered, scored, one-page CV is required before approval.');
+    }
     tx.create(event, {
       previousStage: input.previousStage, nextStage: input.nextStage,
       inputSha256: sha256Bytes(inputJson), outputSha256: sha256Bytes(outputJson),
@@ -96,6 +104,10 @@ export async function recordCvPipelineStage(
     tx.update(workspace, {
       stage: input.nextStage,
       stageVersion: FieldValue.increment(1),
+      ...(input.nextStage === 'cv_draft' ? {
+        latestCvQualityPassed: false,
+        latestScoredCvVersionId: null,
+      } : {}),
       updatedAt: FieldValue.serverTimestamp(),
     });
   });
@@ -136,7 +148,13 @@ export async function recordCvScoreSnapshot(uid: string, workspaceId: string,
   const workspace = refFor(uid, workspaceId);
   const result = workspace.collection('scoreSnapshots').doc(input.snapshotId);
   const prior = await result.get();
-  if (prior.exists) return { snapshotId: input.snapshotId, score: prior.data()?.rawAts?.score ?? null };
+  if (prior.exists) return {
+    snapshotId: input.snapshotId,
+    rawAts: prior.data()?.rawAts,
+    recruiterFit: prior.data()?.recruiterFit,
+    layoutQuality: prior.data()?.quality ?? null,
+    acceptedForFinalCv: input.timing === 'post_cv' && prior.data()?.quality?.passed === true,
+  };
 
   const source = await getFirestore().collection('users').doc(uid)
     .collection('profileRevisions').doc(input.profileRevisionId).get();
@@ -196,6 +214,14 @@ export async function recordCvScoreSnapshot(uid: string, workspaceId: string,
     if (other.data()?.sha256 !== sha256Bytes(content)) {
       throw new HttpsError('already-exists', 'A score ID was already used for a different evaluation.');
     }
+  }
+  if (input.timing === 'post_cv') {
+    await workspace.update({
+      latestCvQualityPassed: quality?.passed === true,
+      latestScoredCvVersionId: input.cvVersionId,
+      latestPostCvScoreSnapshotId: input.snapshotId,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
   }
   return { snapshotId: input.snapshotId, rawAts: ats, recruiterFit: recruiter,
     layoutQuality: quality, acceptedForFinalCv: input.timing === 'post_cv' && quality?.passed === true };
