@@ -144,7 +144,7 @@ export async function recordCvModelUsage(uid: string, workspaceId: string, event
   const estimatedCostUsd = tokenCost(usage);
   try {
     await ref.create({
-      ...usage, sha256: contentHash, estimatedCostUsd,
+      usage, sha256: contentHash, estimatedCostUsd,
       auditArtifactId: artifact.artifactId, recordedAt: FieldValue.serverTimestamp(),
     });
   } catch (error) {
@@ -234,7 +234,7 @@ export const getMyCvWorkspaceReport = onCall(settings, async request => {
     ref.collection('tokenUsage').orderBy('recordedAt', 'desc').limit(250).get(),
     ref.collection('scoreSnapshots').orderBy('createdAt', 'desc').limit(100).get(),
   ]);
-  const usage = tokenEntries.docs.map(doc => tokenUsageSchema.parse(doc.data()));
+  const usage = tokenEntries.docs.map(doc => tokenUsageSchema.parse(doc.data().usage));
   return {
     workspaceId,
     folderName: record.folderName,
@@ -246,9 +246,9 @@ export const getMyCvWorkspaceReport = onCall(settings, async request => {
     gaps: record.gapSummary ?? [],
     tokenCounter: summarizeTokenUsage(usage),
     tokenUsageEvents: tokenEntries.docs.map(doc => ({
-      id: doc.id, stage: doc.data().stage, model: doc.data().model,
-      provider: doc.data().provider, inputTokens: doc.data().inputTokens,
-      outputTokens: doc.data().outputTokens, totalTokens: doc.data().totalTokens,
+      id: doc.id, stage: doc.data().usage.stage, model: doc.data().usage.model,
+      provider: doc.data().usage.provider, inputTokens: doc.data().usage.inputTokens,
+      outputTokens: doc.data().usage.outputTokens, totalTokens: doc.data().usage.totalTokens,
       estimatedCostUsd: doc.data().estimatedCostUsd ?? null,
     })),
     artifacts: artifacts.docs.map(doc => ({
