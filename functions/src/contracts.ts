@@ -127,6 +127,7 @@ export const careerProfileSchema = z.object({
     level: z.enum(['basic', 'conversational', 'professional', 'fluent', 'native', 'unspecified']).default('unspecified'),
   }).strict()).max(30).default([]),
   workEligibility: z.array(z.object({
+    id: z.string().uuid().optional(),
     country: z.string().trim().min(2).max(120),
     authorisedNow: z.enum(['yes', 'no', 'unknown']),
     sponsorshipNow: z.enum(['yes', 'no', 'unknown']),
