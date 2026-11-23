@@ -26,21 +26,26 @@ const required = [config.apiKey, config.authDomain, config.projectId, config.app
 // Spark Firebase cannot deploy the project's current Cloud Functions backend.
 export const isFirebaseConfigured =
   correctProject && required.every(Boolean) && env.VITE_GUIDON_CORE_ENABLED === 'true';
+// Spark can verify Firebase Auth without calling undeployed Cloud Functions.
+// No private records or document uploads are enabled by this flag.
+export const isFirebaseAuthConfigured =
+  correctProject && required.every(Boolean) &&
+  (isFirebaseConfigured || env.VITE_GUIDON_AUTH_PREVIEW_ENABLED === 'true');
 
 let app: FirebaseApp | null = null;
 let auth: Auth | null = null;
 let functions: Functions | null = null;
 
-if (isFirebaseConfigured) {
+if (isFirebaseAuthConfigured) {
   app = getApps()[0] ?? initializeApp(config);
   auth = getAuth(app);
-  functions = getFunctions(app, 'europe-west1');
+  if (isFirebaseConfigured) functions = getFunctions(app, 'europe-west1');
   // The emulators are opt-in and must never be compiled into a production build.
   if (env.DEV && env.VITE_USE_FIREBASE_EMULATORS === 'true') {
     const { connectAuthEmulator } = await import('firebase/auth');
     const { connectFunctionsEmulator } = await import('firebase/functions');
     connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
-    connectFunctionsEmulator(functions, '127.0.0.1', 5001);
+    if (functions) connectFunctionsEmulator(functions, '127.0.0.1', 5001);
   }
 }
 export { app as firebaseApp, auth as firebaseAuth, functions as firebaseFunctions };
