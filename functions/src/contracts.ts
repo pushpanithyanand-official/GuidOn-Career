@@ -24,6 +24,57 @@ export const cvUploadInput = z.object({
 const short = z.string().trim().max(180);
 const date = z.string().trim().max(30);
 
+// Capture evidence at the source (employment/education), not just as CV wording.
+// The value and unit remain separate so the AI never needs to invent a number.
+export const keyNumberSchema = z.object({
+  id: z.string().uuid(),
+  label: z.string().trim().min(1).max(180),
+  value: z.number().finite(),
+  unit: z.string().trim().min(1).max(35),
+  context: z.string().trim().max(400).optional(),
+  timeframe: z.string().trim().max(80).optional(),
+  sourceNote: z.string().trim().max(500).optional(),
+  verification: z.enum(['unconfirmed', 'user_confirmed']).default('unconfirmed'),
+}).strict();
+
+// STAR sections may remain partial drafts while the user enriches their profile.
+// Only complete, explicitly confirmed stories may be used as verified CV evidence.
+export const starStorySchema = z.object({
+  id: z.string().uuid(),
+  situation: z.string().trim().max(1000).optional(),
+  task: z.string().trim().max(1000).optional(),
+  action: z.string().trim().max(1500).optional(),
+  result: z.string().trim().max(1500).optional(),
+  linkedKeyNumberIds: z.array(z.string().uuid()).max(15).default([]),
+  sourceNote: z.string().trim().max(500).optional(),
+  verification: z.enum(['unconfirmed', 'user_confirmed']).default('unconfirmed'),
+}).strict().superRefine((story, ctx) => {
+  if (story.verification === 'user_confirmed') {
+    for (const field of ['situation', 'task', 'action', 'result'] as const) {
+      if (!story[field]) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: [field],
+          message: 'A confirmed STAR story must include Situation, Task, Action and Result.' });
+      }
+    }
+  }
+});
+
+function checkStoryMetrics(
+  value: { keyNumbers: { id: string }[]; starStories: { linkedKeyNumberIds: string[] }[] },
+  ctx: z.RefinementCtx,
+) {
+  const availableIds = new Set(value.keyNumbers.map(metric => metric.id));
+  for (const [index, story] of value.starStories.entries()) {
+    for (const [position, id] of story.linkedKeyNumberIds.entries()) {
+      if (!availableIds.has(id)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom,
+          path: ['starStories', index, 'linkedKeyNumberIds', position],
+          message: 'STAR metric reference must belong to the same employment/education entry.' });
+      }
+    }
+  }
+}
+
 export const experienceSchema = z.object({
   id: z.string().uuid(),
   employer: short,
@@ -33,7 +84,9 @@ export const experienceSchema = z.object({
   endDate: date.optional(),
   current: z.boolean().optional(),
   highlights: z.array(z.string().trim().min(1).max(500)).max(20).default([]),
-}).strict();
+  keyNumbers: z.array(keyNumberSchema).max(40).default([]),
+  starStories: z.array(starStorySchema).max(30).default([]),
+}).strict().superRefine(checkStoryMetrics);
 
 export const educationSchema = z.object({
   id: z.string().uuid(),
@@ -43,7 +96,9 @@ export const educationSchema = z.object({
   startDate: date.optional(),
   endDate: date.optional(),
   highlights: z.array(z.string().trim().min(1).max(400)).max(15).default([]),
-}).strict();
+  keyNumbers: z.array(keyNumberSchema).max(40).default([]),
+  starStories: z.array(starStorySchema).max(30).default([]),
+}).strict().superRefine(checkStoryMetrics);
 
 export const projectSchema = z.object({
   id: z.string().uuid(),
