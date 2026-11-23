@@ -110,3 +110,14 @@ The existing Manifest V3 autofill source was located in the legacy repository, b
 The user-approved roadmap contains two Gmail capabilities: (1) **job-alert discovery import** (planned) and (2) **automated application and interview tracking** (future), including receipt/recruiter matching, assessments, interview scheduling/rescheduling, user-confirmed offers/rejections, notifications and eventual Calendar/analytics. Neither has been connected or implemented.
 
 Read [Gmail Integration and Application & Interview Tracking](docs/GMAIL_INTEGRATION_APPLICATION_TRACKING.md), [Master Plan Addendum v1.4](docs/GUIDON_CAREER_MASTER_PLAN.md) and the [phase acceptance audit](docs/MASTER_PLAN_STAGE_AUDIT.md). The existing Chrome extension is still a separate migration; it will share the same application IDs, history, CVs and user profile. **No extension auto-Next/Continue/Submit is permitted.**
+
+
+## Core-platform implementation update — 23 November 2026
+
+**User-supplied project IDs:** Firebase `guidon-career-fcda2` (intended Auth/Hosting/Firestore/Functions) and separate GCP `guidon-career` (possible future worker compute only with explicit IAM). These are **not** interchangeable. See [Setup](docs/FIREBASE_PROJECT_SETUP.md).
+
+The draft branch includes live-code React pages behind Firebase Auth: Career profile manual drafts/confirmation, private job discovery and favourites, manual JD review, the job-specific CV workspace, application creation, typed event history and interview status updates. The deterministic evidence-only one-page DOCX/PDF worker produces real files in tests, but is **not yet connected to an AI provider or hosted CV-generation API**, and it cannot preserve an uploaded base CV's layout.
+
+The real Firebase Web App config, authorised Google/email providers, Firestore/Hosting services and protected deploy identity still need owner-side provisioning. `VITE_GUIDON_CORE_ENABLED=false` prevents pretending that static Hosting alone is a functioning private application. **No production deployment, Gmail connection or CV upload has been enabled.**
+
+Run CI and review the [phase audit](docs/MASTER_PLAN_STAGE_AUDIT.md) before manually authorising the [Hosting](.github/workflows/deploy-hosting.yml) or [Functions](.github/workflows/deploy-core-backend.yml) workflow.
