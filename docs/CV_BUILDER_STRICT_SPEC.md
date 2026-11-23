@@ -29,7 +29,7 @@ Rules:
 - Use normalised, case-insensitive, punctuation-tolerant whole phrases.
 - Count each relevant JD term **once**, regardless of repeated mention; do not reward stuffing or unrelated terms.
 - Record required versus preferred classifications, matched phrases and missing phrases.
-- For pre-CV use confirmed profile evidence; this is *potential keyword evidence coverage*, not actual CV parsing.
+- For pre-CV, the backend derives scored text deterministically from confirmed profile experience, education, qualifications, skills, completed confirmed STAR stories and **confirmed** standalone numeric achievements. Model-generated prose is not trusted as the scored source; this is *potential evidence coverage*, not actual CV parsing.
 - For post-CV use the **text extracted from the final rendered candidate CV**; never score the pre-render draft as if it were exported.
 - If the JD yields no defensible relevant terms, score is **N/A** and explicitly indicates insufficient information.
 - Scores belong to GuidOn, **not a named employer ATS** and do not represent any hiring probability.
@@ -53,7 +53,7 @@ Rules:
 - Every positive score requires source evidence IDs and a concise explanation.
 - Unclear eligibility, work history or absent evidence is *unknown*, not an assumed positive or negative.
 - If any required rubric category cannot be assessed credibly, overall Recruiter Fit remains **N/A / needs review**; never fabricate precision.
-- Before CV generation assess **all verified candidate evidence**; after CV generation assess **evidence actually represented in that CV**.
+- Before CV generation assess **all verified candidate evidence**; after CV generation assess **only evidence actually represented in that CV**. A saved CV version includes source-linked visible claim excerpts; the quoted wording must occur in the rendered exported text, and referenced evidence IDs must belong to the confirmed profile. Scoring rejects claims citing invisible/unsupported evidence.
 - Report category scores, supporting evidence, missing evidence and recommendations; rubric version is immutable for historical comparability.
 - Revisions show **pre / V1 / V2 / ...** score trend for both systems, without promising a specific 90% threshold.
 
