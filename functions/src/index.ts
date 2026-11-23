@@ -193,3 +193,13 @@ export {
 } from './cv-workspace-api';
 
 export { previewMyJdReview, confirmMyJdReview } from './cv-jd-api';
+
+export {
+  getMyJobListings,
+  setMyJobDecision,
+  getMyJobTimeline,
+  saveMyJobFilters,
+  getMyJobFilters,
+} from './job-discovery-api';
+
+export { setMyCvGenerationMode } from './cv-generation-mode-api';
