@@ -22,6 +22,7 @@ service firebase.storage {
         )
         && firestore.exists(/databases/(default)/documents/users/$(uid)/baseCvs/$(uploadId))
         && firestore.get(/databases/(default)/documents/users/$(uid)/baseCvs/$(uploadId)).data.status == 'awaiting_upload'
+        && request.time < firestore.get(/databases/(default)/documents/users/$(uid)/baseCvs/$(uploadId)).data.expiresAt
         && firestore.get(/databases/(default)/documents/users/$(uid)/baseCvs/$(uploadId)).data.mimeType == request.resource.contentType
         && firestore.get(/databases/(default)/documents/users/$(uid)/baseCvs/$(uploadId)).data.sizeBytes == request.resource.size;
 
