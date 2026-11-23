@@ -74,6 +74,35 @@ test('two signed-in users cannot read or change the other user’s career worksp
       clientRequestId: '550e8400-e29b-41d4-a716-446655440000',
     }), error => error.code === 'functions/failed-precondition');
     assert.equal(a.capabilities.cvUploadsEnabled, false);
+
+    // Audit folders are separately namespaced per candidate, even for the same vacancy.
+    const vacancy = {
+      clientRequestId: '550e8400-e29b-41d4-a716-446655440004',
+      company: 'Example Company', designation: 'Financial Analyst',
+      location: 'Dublin, Ireland',
+      originalJd: 'Prepare financial forecasts and analyse financial results using SQL, Excel and Power BI to support operational decisions.',
+    };
+    const created = await alice.call('createMyCvWorkspace', vacancy);
+    assert.equal(created.workspaceId, vacancy.clientRequestId);
+    assert.match(created.folderName, /^Example Company - Financial Analyst - Dublin Ireland__/);
+    const report = await alice.call('getMyCvWorkspaceReport', { workspaceId: created.workspaceId });
+    assert.equal(report.stage, 'jd_review');
+    assert.equal(report.tokenCounter.totalTokens, 0);
+    assert.equal(report.artifacts.length, 1);
+    assert.equal(report.artifacts[0].category, 'jd_input');
+
+    const duplicate = await alice.call('createMyCvWorkspace', vacancy);
+    assert.equal(duplicate.workspaceId, created.workspaceId);
+    assert.equal((await alice.call('getMyCvWorkspaceReport',
+      { workspaceId: created.workspaceId })).artifacts.length, 1);
+
+    await assert.rejects(bob.call('getMyCvWorkspaceReport', {
+      workspaceId: created.workspaceId,
+    }), error => error.code === 'functions/not-found');
+    await assert.rejects(alice.call('createMyCvWorkspace', {
+      ...vacancy, uid: bob.auth.currentUser.uid,
+    }), error => error.code === 'functions/invalid-argument');
+
   } finally {
     await Promise.all([deleteApp(alice.app), deleteApp(bob.app), deleteApp(visitor.app)]);
   }
