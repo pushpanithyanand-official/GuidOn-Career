@@ -132,15 +132,16 @@ export async function writeCvAuditArtifact(
 export async function recordCvModelUsage(uid: string, workspaceId: string, eventId: string, raw: TokenUsage) {
   identifier.parse(eventId);
   const usage = tokenUsageSchema.parse(raw);
-  const ref = collection(uid).doc(workspaceId).collection('tokenUsage').doc(eventId);
-  const snapshot = await ref.get();
+  const workspace = collection(uid).doc(workspaceId);
+  const ref = workspace.collection('tokenUsage').doc(eventId);
   const serialized = JSON.stringify(usage);
   const contentHash = sha256Bytes(serialized);
-  if (snapshot.exists) {
-    if (snapshot.data()?.sha256 !== contentHash) {
-      throw new HttpsError('already-exists', 'Different token usage was already recorded for this event ID.');
+  const existing = await ref.get();
+  if (existing.exists) {
+    if (existing.data()?.sha256 !== contentHash) {
+      throw new HttpsError('already-exists', 'Different token usage was recorded for this event ID.');
     }
-    return { eventId, costUsd: snapshot.data()?.estimatedCostUsd ?? null };
+    return { eventId, costUsd: existing.data()?.estimatedCostUsd ?? null };
   }
   const artifact = await writeCvAuditArtifact(uid, workspaceId, {
     id: eventId,
@@ -150,19 +151,36 @@ export async function recordCvModelUsage(uid: string, workspaceId: string, event
     content: serialized,
   });
   const estimatedCostUsd = tokenCost(usage);
-  try {
-    await ref.create({
+  const increments = {
+    requests: FieldValue.increment(1),
+    inputTokens: FieldValue.increment(usage.inputTokens),
+    outputTokens: FieldValue.increment(usage.outputTokens),
+    totalTokens: FieldValue.increment(usage.totalTokens),
+    cachedInputTokens: FieldValue.increment(usage.cachedInputTokens ?? 0),
+    reasoningOutputTokens: FieldValue.increment(usage.reasoningOutputTokens ?? 0),
+    estimatedUsd: FieldValue.increment(estimatedCostUsd ?? 0),
+    unpricedRequests: FieldValue.increment(estimatedCostUsd === null ? 1 : 0),
+    updatedAt: FieldValue.serverTimestamp(),
+  };
+  await getFirestore().runTransaction(async tx => {
+    const current = await tx.get(ref);
+    if (current.exists) {
+      if (current.data()?.sha256 !== contentHash) {
+        throw new HttpsError('already-exists', 'Token event ID was reused for a different response.');
+      }
+      return;
+    }
+    tx.create(ref, {
       usage, sha256: contentHash, estimatedCostUsd,
       auditArtifactId: artifact.artifactId, recordedAt: FieldValue.serverTimestamp(),
     });
-  } catch (error) {
-    const code = (error as { code?: number | string }).code;
-    if (code !== 6 && code !== 'already-exists') throw error;
-    const previous = await ref.get();
-    if (previous.data()?.sha256 !== contentHash) throw error;
-  }
+    // These counters include all calls, even when more than 250 history rows exist.
+    tx.set(workspace.collection('usageAggregates').doc('all'), increments, { merge: true });
+    tx.set(workspace.collection('usageAggregates').doc(usage.cvVersionId ?? 'pre_cv'), increments, { merge: true });
+  });
   return { eventId, costUsd: estimatedCostUsd };
 }
+
 
 /** One private folder per company + designation + location + immutable UUID. */
 export const createMyCvWorkspace = onCall(settings, async request => {
@@ -237,12 +255,26 @@ export const getMyCvWorkspaceReport = onCall(settings, async request => {
   const uid = uidFor(request);
   const { workspaceId } = validate(lookupInput, request.data);
   const { ref, record } = await existingWorkspace(uid, workspaceId);
-  const [artifacts, tokenEntries, scoreEntries] = await Promise.all([
+  const [artifacts, tokenEntries, scoreEntries, usageTotal, usageByVersion] = await Promise.all([
     ref.collection('artifacts').orderBy('createdAt', 'desc').limit(250).get(),
     ref.collection('tokenUsage').orderBy('recordedAt', 'desc').limit(250).get(),
     ref.collection('scoreSnapshots').orderBy('createdAt', 'desc').limit(100).get(),
+    ref.collection('usageAggregates').doc('all').get(),
+    ref.collection('usageAggregates').limit(100).get(),
   ]);
   const usage = tokenEntries.docs.map(doc => tokenUsageSchema.parse(doc.data().usage));
+  const aggregated = usageTotal.data();
+  const counters = aggregated ? {
+    requests: aggregated.requests ?? 0,
+    inputTokens: aggregated.inputTokens ?? 0,
+    outputTokens: aggregated.outputTokens ?? 0,
+    totalTokens: aggregated.totalTokens ?? 0,
+    cachedInputTokens: aggregated.cachedInputTokens ?? 0,
+    reasoningOutputTokens: aggregated.reasoningOutputTokens ?? 0,
+    estimatedUsd: Math.round((aggregated.estimatedUsd ?? 0) * 1_000_000) / 1_000_000,
+    unpricedRequests: aggregated.unpricedRequests ?? 0,
+    completeCostAvailable: (aggregated.unpricedRequests ?? 0) === 0,
+  } : summarizeTokenUsage(usage);
   return {
     workspaceId,
     folderName: record.folderName,
@@ -264,9 +296,24 @@ export const getMyCvWorkspaceReport = onCall(settings, async request => {
       scorerVersion: doc.data().scorerVersion ?? null,
     })),
     gaps: record.gapSummary ?? [],
-    tokenCounter: summarizeTokenUsage(usage),
+    tokenCounter: counters,
+    tokenCounterByVersion: usageByVersion.docs
+      .filter(doc => doc.id !== 'all')
+      .map(doc => ({ cvVersionId: doc.id === 'pre_cv' ? null : doc.id, ...doc.data() }))
+      .map(item => ({
+        cvVersionId: item.cvVersionId,
+        requests: item.requests ?? 0, inputTokens: item.inputTokens ?? 0,
+        outputTokens: item.outputTokens ?? 0, totalTokens: item.totalTokens ?? 0,
+        cachedInputTokens: item.cachedInputTokens ?? 0,
+        reasoningOutputTokens: item.reasoningOutputTokens ?? 0,
+        estimatedUsd: Math.round((item.estimatedUsd ?? 0) * 1_000_000) / 1_000_000,
+        unpricedRequests: item.unpricedRequests ?? 0,
+      })),
     tokenUsageEvents: tokenEntries.docs.map(doc => ({
       id: doc.id, stage: doc.data().usage.stage, model: doc.data().usage.model,
+      cvVersionId: doc.data().usage.cvVersionId ?? null,
+      attemptId: doc.data().usage.attemptId ?? null,
+      outcome: doc.data().usage.outcome,
       provider: doc.data().usage.provider, inputTokens: doc.data().usage.inputTokens,
       outputTokens: doc.data().usage.outputTokens, totalTokens: doc.data().usage.totalTokens,
       cachedInputTokens: doc.data().usage.cachedInputTokens ?? null,
