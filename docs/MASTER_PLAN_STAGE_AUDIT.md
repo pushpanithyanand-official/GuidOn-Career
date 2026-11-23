@@ -84,3 +84,21 @@ Master Plan **Addendum v1.4** introduces two distinct email capabilities that do
 No Gmail OAuth connector, forwarding pipeline, email watch, email-status classifier or Calendar writer is implemented in this branch. UI/UX references must treat these as future features, not existing dashboard data. The linked [Gmail Tracking Roadmap](GMAIL_INTEGRATION_APPLICATION_TRACKING.md) describes the planned state/event matching model and consent boundaries.
 
 **Reminder:** The legacy extension's six target functions (Capture, Save, Make CV, Recommend CV, current-page Autofill, Track) remain a separate migration track. The extension is not complete until real GuidOn integration, authentication and **no Next/Continue/Submit** tests pass. The independent `web.app` address is still not verified.
+
+
+## Core implementation checkpoint — 23 November 2026 (post source audit)
+
+The original phase conclusions **remain PARTIAL**, but evidence increased after the initial audit:
+
+- **Phase 0:** Firebase project IDs supplied; protected Hosting-only and Functions-only workflows and public-client release flag added. Actual cloud ownership, billing, Hosting site, Web SDK config, deployed URL and IAM remain **unverified**.
+- **Phase 1:** React email/Google registration, login, reset, authenticated session bootstrap and private workspace have actual source implementations; two-user emulator tests exist. Live Firebase sign-in not yet verified.
+- **Phase 2:** UI for manually editing and confirming profile, job/education STAR and numeric evidence now calls secured APIs. CV-first upload, document scan, AI extraction, original-base format save and consent/export still pending.
+- **Phase 3:** Signed-in dashboard uses backend job/application/CV counts, but live deployment and mobile install not yet confirmed.
+- **Phase 4:** Private job listing/detail, manual addition, filtering, favourites and status API/UI exist; real feeder import and indexed multi-user search pending.
+- **Phase 5:** JD cleanup and source-backed manual confirmation available in CV Studio; no live AI match/gap worker yet.
+- **Phase 6:** Real deterministic evidence-only DOCX/PDF worker and synthetic/actual rendering QA tests added; no live AI orchestration, base-CV style retention or real download flow yet.
+- **Phase 7:** Application entities, user-confirmed submissions, append-only timeline, interview record and job summary synchronisation now implemented in backend and temporary UI; no live deployment and email-derived events.
+- **Phase 8:** Chrome/Android bridge remains only contracts; legacy extension not ported and no safe live autofill tested.
+- **Phase 9:** Local CI and two-user emulator suite; actual production privacy, cost, credentials, retention/export and performance gates remain pending.
+
+Project mapping: Firebase **`guidon-career-fcda2`**; separately supplied GCP project **`guidon-career`** is *not* interchangeable and is reserved for possible separately authorised workers. See [Firebase Project Setup](FIREBASE_PROJECT_SETUP.md). **No live `web.app` release is verified.**
