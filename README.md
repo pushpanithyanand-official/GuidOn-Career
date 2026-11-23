@@ -41,3 +41,31 @@ Phase 3: personal dashboard and PWA installability; Releases B/C subsequently ad
 - External applications and final submissions always remain user-controlled.
 
 See [Phase 0 checklist](docs/PHASE_0_CHECKLIST.md).
+
+
+## Backend-first development track
+
+GuidOn Career now prioritises **services, private multi-user data, APIs, CV storage/extraction architecture and end-to-end reliability**. The current React shell is temporary; the UI/UX designer can replace it without changing the backend.
+
+The backend lives under `functions/` and has its own Node.js 22 / TypeScript build. See [backend contract and independent design handoff](docs/BACKEND_CONTRACT.md).
+
+```bash
+cd functions
+npm install
+npm run check
+npm test
+```
+
+The Firebase CLI configuration includes local Auth, Firestore, Functions and Storage emulators. It does **not** configure a live cloud project, secret or automatic deployment. `firestore.rules` and `storage.rules` remain deny-all; `storage.uploads.rules` is a non-deployed candidate for later security testing.
+
+### Backend build priority
+
+1. Secure authentication and private per-user account bootstrap.
+2. Versioned Career Intelligence Profile and immutable evidence corrections.
+3. CV upload intents, private original files, safe extraction/processing pipeline and provenance.
+4. Canonical jobs, user-specific saved opportunities and application statuses.
+5. Document-generation jobs, per-user version storage and async processing controls.
+6. Profile matching and approved Answer Bank APIs.
+7. Privacy, export/deletion, abuse controls, emulator tests, monitoring and costs.
+
+No application screen or visual component in the current starter is the source of truth for future product design.
