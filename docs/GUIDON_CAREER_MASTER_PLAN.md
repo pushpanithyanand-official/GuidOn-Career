@@ -726,3 +726,63 @@ Improve supported-platform coverage, privacy governance, reliability, cost contr
 - Chrome extension availability on mobile browsers: https://support.google.com/chrome_webstore/answer/1698338?hl=en
 
 **Guiding rule:** The first released GuidOn Career must let an ordinary new user complete the end-to-end job application preparation and tracking journey. The optional companion experiences should make that journey easier, not become prerequisites for using the product.
+
+---
+
+# Addendum v1.2 — Mandatory Staged CV Builder, Dual Scoring, and Complete Job Audit
+
+**Added:** 23 November 2026  
+**Change approach:** Append-only, without deleting or superseding Sections 1–18 or Addendum v1.1.  
+**Detailed specification:** [Strict CV Builder Engineering Specification](CV_BUILDER_STRICT_SPEC.md).
+
+## 19. Staged CV building is a mandatory workflow
+
+1. **Understand and clean the selected JD** without inventing or silently dropping requirements; retain unchanged original and cleaned JD plus provenance.
+2. **Match a user-verified Career Intelligence Profile** to the JD, linking every relevant experience, qualification, achievement and STAR evidence record.
+3. **Show both preliminary scores and concise gaps** before CV generation: Raw ATS distinct JD keyword coverage and a separate evidence-backed Recruiter Fit rubric; gap prompts must be short and actionable.
+4. **Wait for the user's acknowledgement, comments and corrections.** Material new profile facts require explicit verification and matching/scoring updates before generation.
+5. **Generate a truthful tailored CV** using the selected uploaded base CV format as closely as practical, with complete natural STAR bullets and separately verified metrics.
+6. **Render and inspect the final candidate document.** Exactly one page is mandatory; alignment, date anchors, font size, margins, output text and line lengths must pass automated checks and human review.
+7. **Recalculate both scores against the generated CV**, showing matched/missing keywords, recruiter evidence, gaps and change from pre-CV scores.
+8. **Support user-requested rewrites/reruns**, preserving every generated CV version, user comment, score snapshot, model usage and audit trail. Do not overwrite earlier attempts.
+
+## 20. Strict layout and integrity controls
+
+- **Exactly one rendered page**: two pages is not a valid final output; if necessary, propose evidence-grounded content prioritisation rather than silently shrinking text below readability thresholds.
+- **Consistent left/right alignment**: section and role headings align on the left; dates use consistent right-aligned positions; measure visible PDF coordinates and fail if alignment deviates beyond the specified tolerance.
+- **Base CV formatting**: retain heading hierarchy, type, visual spacing and layout where feasible; if source formatting is incompatible with ATS or one-page constraints, require controlled fallback review.
+- **STAR and key results**: no fabricated claims; natural action/result bullets supported by Situation, Task, Action, Result records and confirmed numerical achievements; individual bullets should not exceed two rendered lines.
+- **Writing style**: avoid excessive hyphens in narrative text; prefer colons, semicolons and commas; reserve dashes for headings or legitimate identifiers and dates.
+- **Readable parsing**: prioritise simple single-column structure, minimum 10 pt body text, sensible margins, actual text extraction, no misleading hidden keyword stuffing.
+
+## 21. Career profile data extension
+
+For **each** job and education entry, retain independently editable, versioned:
+
+- Basic job or institution details and normal responsibilities.
+- **Key numbers**: numeric value, measurement/unit, timeframe, context, evidence source and user-verification state.
+- **STAR stories**: Situation, Task, Action, Result, linked verified metric IDs and source/confirmation state.
+- Incomplete extracted stories remain unconfirmed until the user supplies or verifies missing facts; confirmation must not silently extend across another employer or qualification.
+
+## 22. Raw ATS, Recruiter Fit and comparisons
+
+- **Raw ATS Keyword Coverage**: number of distinct *JD-grounded relevant* phrases present divided by total distinct relevant phrases, multiplied by 100; duplicates and excessive repetition never increase the score. Record exact matching/missing terms and methodology.
+- **Recruiter Fit**: independent qualitative and evidence-based rubric weighted for relevant experience, achievements, skills, seniority, qualifications and work eligibility. Unknown evidence is clearly labelled rather than assumed; the result is GuidOn's own decision support, not an employer rating.
+- Calculate both scores **before generation** from confirmed profile evidence and **after each generation** from the actual CV, including each revised version; store per-category reasoning, matched/missing terms, gaps and history.
+- No score should be presented as a hiring probability, universal ATS score or guarantee of a shortlist.
+
+## 23. Every application gets a complete private folder and usage ledger
+
+Folder naming rule: **Company Name - Designation - Location**, with an immutable internal UUID suffix to prevent collision or accidental overwrites.
+
+Retain in the user's private folder: original/cleaned JD, extraction/analysis results, confirmed profile revision or evidence snapshot, all stage inputs and outputs, preliminary/final scores, brief gaps, user comments, every generated CV and optional cover letter, rendered document QA, edits/reruns, error/retry details, token/usage summaries and associated costs when available.
+
+- Token counter must show **actual provider-reported** input, output, total, cached and reasoning tokens when supplied, by stage and per-job total. Never invent token consumption; calculate estimated costs only from recorded price snapshots.
+- Save an inspectable artifact manifest, immutable version/checksum references and verified owner-scoped storage paths. File export/deletion, privacy consent and retention are mandatory for production readiness.
+- All surfaces, including website, installable PWA, extension and optional native Android client, use the same authenticated folder and CV engine interfaces.
+
+## 24. Release gate for the CV builder
+
+The CV engine is **not complete** until a fresh test candidate and JD can complete the staged workflow and approve a real one-page rendered DOCX/PDF, with both pre/post scores, a concise gap review, one user-requested rerun, verified metrics, and a full private audit folder. A separate account must be unable to access any part of the first user's folder or token history.
+
+**This addendum adds requirements; it does not claim that the current draft backend is deployed or that AI generation already works.**
