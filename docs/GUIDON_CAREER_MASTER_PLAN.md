@@ -838,3 +838,19 @@ Smart Sort must be available on the main job-listings page and rank roles by the
 **UI ownership:** These are service/data/interaction requirements, not a mandate to retain the screenshot's colours, typography or exact component dimensions. The UI/UX designer remains free to create the presentation.
 
 **Detailed backend contracts:** [Job Discovery and Creative CV Mode Specification](JOB_DISCOVERY_CREATIVE_MODE.md) and [Strict CV Builder Specification](CV_BUILDER_STRICT_SPEC.md).
+
+
+---
+
+# Implementation checkpoint — Universal web.app, extension integration and full stage audit
+
+**Recorded:** 23 November 2026. **Append-only**: no previous phase, addendum, acceptance condition, or strict CV-builder requirement is removed or weakened by this checkpoint.
+
+- GuidOn's end-user target is **one independent Firebase Hosting `*.web.app` entrypoint**, responsive and installable as a PWA where supported, with one authenticated user account and shared backend. Actual address is assigned by a newly created Firebase Hosting site and must be verified after deployment; a GitHub code repository alone is not a live website.
+- The optional desktop Chrome extension is included in the architecture as an existing legacy prototype to migrate, **not a separate profile or jobs database**. Legacy source was located in `abhisheknair607-ux/automate_cv/experimental/garamaal-autofill/extension`. This source still contains a Next/Continue automation control and old account assumptions, which **must not** be carried into GuidOn. Only user-reviewed current-page fills, with manual navigation and submission, are permitted.
+- The website, extension and later optional native Android preparation browser share the exact same private Career Intelligence Profile, job captures, CV versions, evidence/Answer Bank and candidate-confirmed application events. A PWA does not gain an extension's external page DOM abilities.
+- Verified JD analysis, user-approved pre-CV gaps, separate Raw ATS Keyword Coverage and Recruiter Fit, one-page/no-table CV rendering, immutable version history and token ledger remain strict release gates. **Think Creatively** is permitted for source-backed narrative reframing only, never changing actual employment/education facts.
+- The complete [phase-by-phase acceptance audit](MASTER_PLAN_STAGE_AUDIT.md) distinguishes code foundations from a completed working user journey: **all original Phases 0–9 remain partial** until their own original exit criteria are demonstrated. No release milestone A–E is signed off.
+- The [Hosting launch checklist](WEBAPP_HOSTING_LAUNCH.md) and [Chrome extension integration contract](CHROME_EXTENSION_INTEGRATION.md) are additive implementation handoffs for the UI/UX designer and backend developer; neither claims live deployment.
+
+**Immediate acceptance order:** independent hosting and Auth → CV-first verified profile → live matching/gaps and strict CV generation → complete job/application workflow → optional connected Chrome extension → security/privacy/scaling sign-off. Features may be developed in parallel, but the core website must work without the extension.
