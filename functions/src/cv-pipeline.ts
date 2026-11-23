@@ -178,6 +178,20 @@ export async function recordCvScoreSnapshot(uid: string, workspaceId: string,
   }
   const workspaceRecord = await workspace.get();
   if (!workspaceRecord.exists) throw new HttpsError('not-found', 'Application folder not found.');
+  if (input.timing === 'post_cv') {
+    const savedVersion = await workspace.collection('cvVersions').doc(input.cvVersionId!).get();
+    if (!savedVersion.exists || savedVersion.data()?.renderQualityPassed !== true) {
+      throw new HttpsError('failed-precondition', 'Post-CV scoring requires a real rendered, QA-passed CV version.');
+    }
+    if (savedVersion.data()?.profileRevisionId !== input.profileRevisionId ||
+        savedVersion.data()?.textSha256 !== sha256Bytes(input.scoredText)) {
+      throw new HttpsError('failed-precondition', 'Post-CV scores must use the exact saved CV text and profile revision.');
+    }
+    // The quality metrics must be the same ones registered with the rendered document.
+    if (JSON.stringify(savedVersion.data()?.quality) !== JSON.stringify(input.quality)) {
+      throw new HttpsError('failed-precondition', 'Rendered document QA metrics do not match the saved CV.');
+    }
+  }
 
   const grounding = validateAtsKeywordsAgainstJd(input.cleanedJd, input.extractedKeywords);
   if (!grounding.grounded) {
