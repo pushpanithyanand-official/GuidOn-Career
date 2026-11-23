@@ -201,3 +201,25 @@ The roadmap at [Gmail Integration and Application & Interview Tracking](GMAIL_IN
 Future APIs/data contracts must support separately scoped user consent, per-user Gmail connection metadata and revocation, matched/unmatched/pending-review messages, immutable application events, interview appointments with timezone/reschedule history, task deadlines and source-specific verification. Email-derived offers and rejections **must never** be promoted without explicit user confirmation. A user may remain fully functional without connecting Gmail.
 
 Use the same application identifier for website/PWA, extension and email update flows; do not create isolated per-channel histories. The existing job workflow statuses are distinct from interview and employer-process stages. Design-stage mock data must be labelled examples.
+
+
+## Implemented manual application lifecycle APIs (not deployed)
+
+All of these callable endpoints require a signed-in Firebase Auth user and derive the user ID from the verified server-side identity. They store only private per-user records. **They have passed local test coverage, but no production Cloud Functions deployment is verified.**
+
+| Endpoint | Request | Outcome |
+| --- | --- | --- |
+| `createMyApplication` | `{jobId,eventId,status:'submitted'|'preparing',userConfirmed:true,submittedOn?,cvWorkspaceId?,cvVersionId?,note?}` | Creates one user-owned application per job ID; verifies accessible job; optional CV must be approved and linked to exact job |
+| `listMyApplications` | `{limit?:1..100}` | Returns signed-in user's own application records, current state, CV link and interview summary |
+| `updateMyApplication` | `{applicationId,eventId,expectedVersion,status,userConfirmed:true,note?,interview?}` | Append-only versioned event, optional timezone-specific interview appointment, synchronises derived job summary |
+| `getMyApplicationTimeline` | `{applicationId,limit?:1..100}` | Immutable user-confirmed event history, never replacing earlier statuses |
+| `getMyJobDetails` | `{jobId}` | Owner-safe detail lookup for public accessible and private manually/captured job |
+| `listMyCvWorkspaces` | `{limit?:1..100}` | Private job-specific CV workflow folders, stage/version and quality status |
+
+The job list no longer allows `setMyJobDecision` to mark **Applied** or **Applied + Connected** without an existing submitted application. Direct unlinked `Rejected` is blocked; confirmed rejection is entered into the application timeline and then reflected on the job card. The original favourite flag is preserved.
+
+**Current Core UI:** `src/auth.tsx`, `src/CareerPage.tsx`, `src/JobsPage.tsx`, `src/CvStudioPage.tsx`, `src/ApplicationsPage.tsx` and `src/DashboardPage.tsx` call these authenticated APIs. The final UI/UX designer may replace all layout and presentation without changing the API security contract.
+
+**Evidence-only CV worker:** `workers/cv_generate.py` can create genuine DOCX/PDF/TXT from selected confirmed STAR evidence using the GuidOn ATS template. It is **not** the complete AI builder or uploaded-base format preservation path, and has no published callable generation endpoint. Actual AI matching, model usage, scoring, export/retention and human final approval remain mandatory separate gates.
+
+See [Firebase project bindings](FIREBASE_PROJECT_SETUP.md), [phase audit](MASTER_PLAN_STAGE_AUDIT.md), and [Master Plan Addendum v1.5](GUIDON_CAREER_MASTER_PLAN.md).
