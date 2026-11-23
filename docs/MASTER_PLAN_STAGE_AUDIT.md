@@ -40,13 +40,13 @@
 3. **CV-first profile release:** Secure upload/quarantine/scan, extract text/format, AI parse to unconfirmed profile draft, user review and immutable confirmation. Sensitive details remain optional and separate.
 4. **First real CV pipeline:** An approved JD/profile goes through match, brief gaps, user feedback, strictly one-page ATS-safe DOCX, rendered QA, actual pre/post scores and iterative versions; verify against several real CV layouts.
 5. **Jobs/application release:** Permitted source ingestion and alerts with indexed discovery; complete applied/interview/outcome record linked to exact CV version, apply URL and explicit candidate confirmation.
-6. **Desktop extension bridge:** Port/integrate the existing extension implementation into the GuidOn auth/job/profile/CV/API model. Test read-only/current-page autofill on supported ATS sites; never automatically Next, Continue or Submit. Android Chrome functionality cannot be delivered just by installing the PWA.
+6. **Desktop extension bridge:** Port/integrate the inspected legacy extension implementation into the GuidOn auth/job/profile/CV/API model. Test read-only/current-page autofill on supported ATS sites; never automatically Next, Continue or Submit. Android Chrome functionality cannot be delivered just by installing the PWA.
 7. **Beta:** Two-unrelated-user production security, complete export/delete, retention/privacy, monitoring, budgets, retry/recovery and operator sign-off.
 
 ## Important technical boundaries
 
 - **Hosted link:** Firebase Hosting `*.web.app` gives one responsive origin and can be installed as a supported PWA. **A real URL cannot be confirmed from repository configuration alone.** Hosting and a deploy identity must exist first.
-- **Chrome extension:** The product requirements and prior prototype are known, but `feat/backend-foundation` contains **no extension manifest/background/content scripts** as of this audit. Shared contracts are not proof the extension currently connects to GuidOn.
+- **Chrome extension:** The legacy Manifest V3 extension source has been located and inspected, but `feat/backend-foundation` contains **no integrated extension manifest/background/content scripts** as of this audit. Shared contracts are not proof the extension currently connects to GuidOn.
 - **Mobile:** PWA cannot inspect arbitrary external-page DOM. The optional Chrome Custom Tab / Android WebView flow requires a separately validated native app and does not automatically share cookies/state.
 - **No phantom submissions:** Opening an Apply URL or filling a current browser page never updates Applied automatically.
 - **No fictional ATS:** Raw ATS is GuidOn's exact JD keyword coverage, Recruiter Fit is an evidence-backed internal rubric, and Smart Sort is a separate opportunity-ranking heuristic.
@@ -62,3 +62,8 @@
 - Extension/API integration: `docs/CHROME_EXTENSION_INTEGRATION.md`.
 
 Re-audit each phase only after corresponding live acceptance evidence is attached. Do not convert *partial* to *complete* because an endpoint or schema compiles.
+
+
+### Legacy extension discovery added to the audit
+
+The existing Manifest V3 source was located at [`abhisheknair607-ux/automate_cv/experimental/garamaal-autofill/extension`](https://github.com/abhisheknair607-ux/automate_cv/tree/main/experimental/garamaal-autofill/extension). It contains DOM form inspection and filling code, but also a `clickNext()` control and connections to the older candidate-specific platform. **Never port that Next/Continue automation**; remove it and verify only current-page, reviewed filling. The old source does **not** satisfy GuidOn Phase 8 until its code is adapted and tested with owner-authenticated GuidOn APIs.
