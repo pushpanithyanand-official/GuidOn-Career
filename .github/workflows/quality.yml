@@ -59,5 +59,7 @@ jobs:
           java-version: '21'
       - name: Install security test dependencies
         run: npm install --prefix functions --no-audit --no-fund
-      - name: Test private data rules against local Firebase emulators
-        run: npx --yes firebase-tools@15.0.0 emulators:exec --only firestore,storage --project demo-guidon-career-security "npm run test:security --prefix functions"
+      - name: Build Firebase Functions for integration tests
+        run: npm run build --prefix functions
+      - name: Test private data rules and two-user callable APIs against local emulators
+        run: npx --yes firebase-tools@15.0.0 emulators:exec --only auth,firestore,functions,storage --project demo-guidon-career-security "npm run test:security --prefix functions && npm run test:api --prefix functions"
