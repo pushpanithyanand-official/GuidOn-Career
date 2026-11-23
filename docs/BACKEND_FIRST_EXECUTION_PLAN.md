@@ -14,15 +14,15 @@
 | Order | Backend workstream | Deliverable / exit criterion | Current status |
 | --- | --- | --- | --- |
 | B0 | Independent cloud infrastructure | New GuidOn-only Firebase/GCP environment with verified owner, budget, region, least privilege, dev/prod separation | Pending cloud connection |
-| B1 | Auth and user isolation | Email/Google sign-in identity, authenticated account bootstrap, own-user-only API tests, verified anonymous rejection | Bootstrap code built; live tests pending |
-| B2 | Career Intelligence Profile | Typed/versioned profile, provenance, explicit approval, immutable revisions, account ownership and personal-data validation | Initial structured profile API built; remaining categories pending |
-| B3 | Base CV processing | Upload intents, safe private storage, scanning, quotas, consent, text extraction, AI parse, user review, format reference | Metadata API built; real upload/AI disabled pending safeguards |
+| B1 | Auth and user isolation | Email/Google sign-in identity, authenticated account bootstrap, own-user-only API tests, verified anonymous rejection | Authenticated APIs and two-user emulator tests added; live cloud tests pending |
+| B2 | Career Intelligence Profile | Typed/versioned profile, provenance, explicit approval, immutable revisions, account ownership and personal-data validation | Draft/confirmed separation, expanded fields, concurrency-safe immutable revisions built; source provenance and Answer Bank pending |
+| B3 | Base CV processing | Upload intents, safe private storage, scanning, quotas, consent, text extraction, AI parse, user review, format reference | Idempotent upload intents, short expiry and user quotas built; uploads disabled until safety controls and isolated hosting are ready |
 | B4 | Vacancy data foundation | Canonical vacancy schema, source provenance/freshness, deduplication, per-user saved decisions, permitted ingestion | Not started |
 | B5 | Job matching & evidence | Requirements extraction, profile matching, traceability, gap review and user-approved additions | Not started |
 | B6 | CV/cover-letter jobs | Versioned generation, base-format reference, object storage, async work, retries/idempotency, user review | Not started |
 | B7 | Applications lifecycle | User-specific application states, notes/timeline, exact document versions, explicit Applied confirmation | Not started |
 | B8 | Cross-platform assistant services | Limited-scope capture, approved Answer Bank, safe field suggestions, manual current-step autofill APIs | Not started |
-| B9 | Production readiness | Emulators, cross-user access denial, upload scanning, privacy/export/delete, costs, logs, back-ups, deployment checks | Early CI present; hardening pending |
+| B9 | Production readiness | Emulators, cross-user access denial, upload scanning, privacy/export/delete, costs, logs, back-ups, deployment checks | CI checks include security rules plus two-user callable API emulator tests; production safeguards pending |
 
 ## Non-negotiable backend invariants
 1. Authenticated UID comes from verified Firebase identity, never a caller-supplied `uid`.
