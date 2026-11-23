@@ -90,6 +90,14 @@ test('two signed-in users cannot read or change the other user’s career worksp
     assert.equal(report.tokenCounter.totalTokens, 0);
     assert.equal(report.artifacts.length, 1);
     assert.equal(report.artifacts[0].category, 'jd_input');
+    const audit = await alice.call('readMyCvAuditArtifact', {
+      workspaceId: created.workspaceId, artifactId: report.artifacts[0].id,
+    });
+    assert.equal(audit.category, 'jd_input');
+    assert.match(audit.text, /Prepare financial forecasts/);
+    await assert.rejects(bob.call('readMyCvAuditArtifact', {
+      workspaceId: created.workspaceId, artifactId: report.artifacts[0].id,
+    }), error => error.code === 'functions/not-found');
 
     const duplicate = await alice.call('createMyCvWorkspace', vacancy);
     assert.equal(duplicate.workspaceId, created.workspaceId);
