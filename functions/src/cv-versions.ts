@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { cvQualityInputSchema, validateCvQuality } from './cv-workflow';
 import { sha256Bytes } from './cv-audit';
 import { writeCvAuditArtifact } from './cv-workspace-api';
+import { verifiedEvidenceIds } from './cv-matching';
 
 const id = z.string().uuid();
 const MAX_FINAL_CV_BYTES = 2_500_000; // Conservative Greenhouse parsing compatibility target.
@@ -18,6 +19,12 @@ const versionMetadata = z.object({
     templateId: z.string().trim().max(200).optional(),
     formatFingerprint: z.string().regex(/^[a-f0-9]{64}$/),
   }).strict(),
+  // Visible claims are source-linked to user-confirmed facts, not just hidden profile keywords.
+  visibleEvidenceClaims: z.array(z.object({
+    claimId: id,
+    exactVisibleText: z.string().trim().min(10).max(700),
+    evidenceIds: z.array(id).min(1).max(12),
+  }).strict()).min(1).max(100),
   // This report must be produced by a trusted render/inspection worker.
   quality: cvQualityInputSchema,
 }).strict();
@@ -32,6 +39,41 @@ export function validateRenderedCvMedia(docx: Buffer, pdf: Buffer, plainText: st
     failures.push('cv_text_unreadable');
   }
   return { valid: failures.length === 0, failures };
+}
+
+
+function normalizedPhrase(text: string) {
+  return text.normalize('NFKC').toLocaleLowerCase('en')
+    .replace(/[^\\p{L}\\p{N}]+/gu, ' ').trim().replace(/\\s+/g, ' ');
+}
+
+/**
+ * A recruiter-visible claim is eligible as evidence only when the exact
+ * substantive wording is present in the exported CV and the profile contains
+ * each cited verified evidence item.
+ */
+export function validateVisibleEvidenceClaims(
+  extractedText: string,
+  claims: readonly { claimId: string; exactVisibleText: string; evidenceIds: string[] }[],
+  eligibleIds: ReadonlySet<string>,
+) {
+  const text = ` ${normalizedPhrase(extractedText)} `;
+  const issues: string[] = [];
+  const represented = new Set<string>();
+  for (const claim of claims) {
+    if (!text.includes(` ${normalizedPhrase(claim.exactVisibleText)} `)) {
+      issues.push(`Claim ${claim.claimId} is not visible in the exported CV`);
+      continue;
+    }
+    for (const id of claim.evidenceIds) {
+      if (!eligibleIds.has(id)) {
+        issues.push(`Claim ${claim.claimId} cites unverified or missing evidence ${id}`);
+      } else {
+        represented.add(id);
+      }
+    }
+  }
+  return { valid: issues.length === 0, issues, representedEvidenceIds: [...represented] };
 }
 
 /**
@@ -59,6 +101,15 @@ export async function registerRenderedCvVersion(uid: string, workspaceId: string
   if (!workspaceDoc.exists) throw new HttpsError('not-found', 'Application workspace not found.');
   if (!profileRevision.exists || profileRevision.data()?.state !== 'user_confirmed') {
     throw new HttpsError('failed-precondition', 'Only a user-confirmed career profile can generate a CV.');
+  }
+  const evidence = validateVisibleEvidenceClaims(
+    output.extractedText, metadata.visibleEvidenceClaims,
+    verifiedEvidenceIds(profileRevision.data()!.data),
+  );
+  if (!evidence.valid) {
+    throw new HttpsError('failed-precondition',
+      'CV evidence must appear in the rendered document and trace to the confirmed profile.',
+      evidence.issues.slice(0, 20));
   }
   if (!['cv_draft', 'post_cv_review', 'revision_requested'].includes(workspaceDoc.data()?.stage)) {
     throw new HttpsError('failed-precondition', 'This application is not in the CV generation/review stage.');
@@ -121,6 +172,7 @@ export async function registerRenderedCvVersion(uid: string, workspaceId: string
     ...metadata,
     textSha256, docxSha256: sha256Bytes(output.docx), pdfSha256: sha256Bytes(output.pdf),
     artifacts: artifacts.map(item => item.artifactId), status,
+    visibleEvidenceIds: evidence.representedEvidenceIds,
     renderQualityPassed: layout.passed,
     createdAt: FieldValue.serverTimestamp(),
   };
