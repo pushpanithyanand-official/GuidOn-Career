@@ -223,3 +223,29 @@ The job list no longer allows `setMyJobDecision` to mark **Applied** or **Applie
 **Evidence-only CV worker:** `workers/cv_generate.py` can create genuine DOCX/PDF/TXT from selected confirmed STAR evidence using the GuidOn ATS template. It is **not** the complete AI builder or uploaded-base format preservation path, and has no published callable generation endpoint. Actual AI matching, model usage, scoring, export/retention and human final approval remain mandatory separate gates.
 
 See [Firebase project bindings](FIREBASE_PROJECT_SETUP.md), [phase audit](MASTER_PLAN_STAGE_AUDIT.md), and [Master Plan Addendum v1.5](GUIDON_CAREER_MASTER_PLAN.md).
+
+
+## Canonical architecture alignment (proposed — not yet active API migration)
+
+This document retains the **existing callable endpoint contracts** while [Master Plan Addendum v1.6](GUIDON_CAREER_MASTER_PLAN.md) formalises a **single logical data model** used by the website, Chrome extension, future mobile browser, Gmail intake and document workers.
+
+New authority/order of reference:
+1. [Architecture/Data/AI Efficiency](ARCHITECTURE_DATA_AI_EFFICIENCY_SPEC.md) defines trust boundaries, AI routing, stage cache, idempotency and accuracy.
+2. [Canonical Database/Migration](DATABASE_CANONICAL_SCHEMA.md) defines proposed `users/{uid}` storage, entities, data-class access and migration crosswalk. **Do not silently replace existing `sparkUsers` client paths or `users` Functions paths until cutover is reviewed.**
+3. [Integrated Pipeline and Phases](INTEGRATED_PIPELINE_AND_PHASE_GATES.md) defines how each job source becomes a job, match, CV, application and future email event.
+
+**Typed logical service interfaces (future adapters; not new deployed callable names):**
+- `IdentityService`: Firebase Auth UID, claims and account lifecycle
+- `ProfileRepository`: drafts, verified profile revisions, education/experience and evidence
+- `JobIntakeService`: source observations, normalisation, licensing, duplicate handling and safe catalogue split
+- `JobRepository`: userJobId, search, favourites, status history and Smart Sort
+- `MatchingService`: JD version, evidence snapshot, pre-CV Raw ATS and Recruiter Fit, gaps
+- `CvWorkspaceService`: verified stage runs, tokens, QA, exact exported file, revision/approval
+- `ApplicationRepository`: applicationId distinct from userJobId, confirmed submission and append-only events
+- `ConnectionService`: separately authorised future Gmail/ATS/mobile/extension interfaces, user-visible consent and revoke
+
+**Every method** must have UID-bound ownership; `schemaVersion`; typed inputs/outputs; status/expected revision; idempotency token; source provenance; pagination/filter contract; structured failure codes; event correlation and redacted audit. Server-trusted scores, CV QA results, model usage and privileged source metadata must not be accepted from an ordinary user client as verified.
+
+**Spark safety:** Existing client-authenticated preview proves sign-in only. Current Cloud Functions endpoints are not available on Spark. Provisional Firestore rules have not passed a complete security/field-authority/migration review; **do not mark private persistence live or switch on the protected core UI flag** until this work is accepted.
+
+**Modules share IDs**, not duplicate copies or independent job/application status authorities. An email alert does not imply Applied; extension autofill must not submit; a CV can be recommended for application only after exact version approval. Planned Gmail signals cannot alter offers, rejections or ambiguous matches without review.
