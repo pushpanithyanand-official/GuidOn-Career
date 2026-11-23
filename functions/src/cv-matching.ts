@@ -125,7 +125,7 @@ export function confirmedProfileEvidenceText(rawProfile: unknown): string {
   append(profile.headline, profile.professionalSummary);
   append(...profile.skills, ...profile.targetRoles);
   for (const job of profile.experience) {
-    append(job.title, job.employer, ...job.highlights);
+    append(job.title, job.employer, job.officialDepartment, ...job.functionalAreas, ...job.highlights);
     for (const metric of job.keyNumbers) {
       if (metric.verification === 'user_confirmed') {
         append(metric.label, String(metric.value), metric.unit, metric.context);
