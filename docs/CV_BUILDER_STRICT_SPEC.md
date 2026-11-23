@@ -172,3 +172,12 @@ Still required for a working CV builder:
 - UC Santa Barbara single-column ATS guidance: https://career.ucsb.edu/get-hired/resumes
 - OpenAI provider token usage reporting: https://help.openai.com/en/articles/4936856-understanding-and-counting-tokens
 - Firestore document size quota, motivating artifact storage separately from record metadata: https://docs.cloud.google.com/firestore/quotas
+
+
+## Addendum v1.1 — Opt-in creative drafting and unconditional no-tables rule
+
+The user selects **Evidence First** (default) or **Think Creatively** before Make CV. The creative mode can change sentence structure, priority, accomplishment focus, transferable-skill wording, and suggest accurate functional department descriptors. It must not rewrite an official employer, title, date, formal department, education, visa rights or unverified KPI. A descriptive functional label cannot be presented as a formally held department. Each creative change cites the confirmed source evidence and is presented for user approval. The selected mode is saved with an immutable audit record and can be changed on rerun.
+
+**Generated DOCX must contain zero tables, including invisible layout tables.** It must also contain zero text boxes, a single column, zero decorative drawings and no material content in headers/footers. The `cvQualityInputSchema` now requires verified OpenXML counts and rejects any violations. The PDF geometry and strict one-page checks still apply. The uploaded base CV stays unchanged even if an ATS-safe output needs structural adaptation.
+
+See [Job Discovery and Creative Mode](JOB_DISCOVERY_CREATIVE_MODE.md) and Master Plan Addendum v1.3 for per-user job favourites, statuses, smart sort and screenshot-inspired filter controls.
