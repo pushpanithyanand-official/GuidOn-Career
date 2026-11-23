@@ -6,7 +6,7 @@ import {
   recruiterAssessmentSchema, scoreRawAtsKeywords, scoreRecruiterFit,
   scoreSnapshotSchema, cvQualityInputSchema, validateCvQuality, compactGapSchema,
 } from './cv-workflow';
-import { validateAtsKeywordsAgainstJd, validateRecruiterEvidence, validateVisibleRecruiterEvidence } from './cv-matching';
+import { validateAtsKeywordsAgainstJd, validateRecruiterEvidence, validateVisibleRecruiterEvidence, confirmedProfileEvidenceText } from './cv-matching';
 import { sha256Bytes } from './cv-audit';
 import { writeCvAuditArtifact, recordCvModelUsage } from './cv-workspace-api';
 
@@ -136,7 +136,8 @@ const scoreRecordSchema = z.object({
   cvVersionId: id.optional(),
   cleanedJd: z.string().min(50).max(120_000),
   extractedKeywords: z.array(keywordSchema).max(250),
-  scoredText: z.string().min(20).max(100_000),
+  // Only post-CV input can supply scored text. Pre-CV is derived from confirmed profile.
+  scoredText: z.string().min(20).max(100_000).optional(),
   recruiter: recruiterAssessmentSchema,
   quality: cvQualityInputSchema.optional(),
 }).strict().superRefine((value, ctx) => {
@@ -145,6 +146,10 @@ const scoreRecordSchema = z.object({
       message: 'Before generation, match against the verified career profile.' });
   }
   if (value.timing === 'post_cv') {
+    if (!value.scoredText) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['scoredText'],
+        message: 'Post-CV scoring requires actual exported CV text.' });
+    }
     if (!value.cvVersionId || !value.quality ||
       value.recruiter.evidenceBasis !== 'rendered_cv') {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['cvVersionId'],
@@ -184,7 +189,7 @@ export async function recordCvScoreSnapshot(uid: string, workspaceId: string,
       throw new HttpsError('failed-precondition', 'Post-CV scoring requires a real rendered, QA-passed CV version.');
     }
     if (savedVersion.data()?.profileRevisionId !== input.profileRevisionId ||
-        savedVersion.data()?.textSha256 !== sha256Bytes(input.scoredText)) {
+        savedVersion.data()?.textSha256 !== sha256Bytes(input.scoredText!)) {
       throw new HttpsError('failed-precondition', 'Post-CV scores must use the exact saved CV text and profile revision.');
     }
     const representation = validateVisibleRecruiterEvidence(
@@ -210,7 +215,10 @@ export async function recordCvScoreSnapshot(uid: string, workspaceId: string,
     throw new HttpsError('failed-precondition', 'Recruiter Fit references unverified or unrelated evidence.');
   }
 
-  const ats = scoreRawAtsKeywords(input.extractedKeywords, input.scoredText);
+  const scoreText = input.timing === 'pre_cv'
+    ? confirmedProfileEvidenceText(source.data()!.data)
+    : input.scoredText!;
+  const ats = scoreRawAtsKeywords(input.extractedKeywords, scoreText);
   const recruiter = scoreRecruiterFit(input.recruiter);
   const quality = input.quality ? validateCvQuality(input.quality) : null;
   const score = scoreSnapshotSchema.parse({
@@ -224,6 +232,7 @@ export async function recordCvScoreSnapshot(uid: string, workspaceId: string,
     quality, jdGrounding: grounding, scorerVersion: 'guidon-v1',
     // The scoring document is verified evidence BEFORE CV, actual rendered text AFTER CV.
     scoreBasis: input.timing === 'pre_cv' ? 'confirmed_profile_evidence' : 'exported_cv_text',
+    scoredTextSha256: sha256Bytes(scoreText),
     scoreDisclaimer: 'Internal guidance only; neither score predicts interviews or represents an ATS vendor score.',
   };
   const content = json(detail);
