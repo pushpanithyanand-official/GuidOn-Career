@@ -2,9 +2,10 @@
 import unittest
 import tempfile
 from pathlib import Path
+from zipfile import ZipFile
 
 import fitz
-from cv_render_qa import inspect_pdf
+from cv_render_qa import inspect_pdf, inspect_docx_structure
 
 
 def draw(page, second_date_offset=0, body_font=10, left=45):
@@ -59,6 +60,49 @@ class CvRenderQaTests(unittest.TestCase):
         self.assertFalse(report['passed'])
         self.assertIn('body_font_below_10pt', report['issues'])
         self.assertIn('horizontal_margin_below_half_inch', report['issues'])
+
+    def create_docx_fixture(self, body: str, header: str = ''):
+        temporary = tempfile.TemporaryDirectory()
+        self.addCleanup(temporary.cleanup)
+        location = Path(temporary.name) / 'layout.docx'
+        with ZipFile(location, 'w') as archive:
+            archive.writestr('word/document.xml',
+                             '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+                             '<w:body>' + body + '</w:body></w:document>')
+            if header:
+                archive.writestr('word/header1.xml',
+                                 '<w:hdr xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+                                 + header + '</w:hdr>')
+        return location
+
+    def test_word_document_has_no_tables_or_multicolumn_layout(self):
+        path = self.create_docx_fixture('<w:p><w:r><w:t>Analyst experience</w:t></w:r></w:p>')
+        structure = inspect_docx_structure(path)
+        self.assertTrue(structure['passed'])
+        self.assertEqual(structure['tableCount'], 0)
+        self.assertEqual(structure['columnCount'], 1)
+
+    def test_tables_and_columns_and_text_boxes_fail_even_if_pdf_looks_fine(self):
+        word = ('<w:tbl><w:tr><w:tc><w:p/></w:tc></w:tr></w:tbl>'
+                '<w:sectPr><w:cols w:num="2"/></w:sectPr>'
+                '<w:txbxContent><w:p/></w:txbxContent>')
+        path = self.create_docx_fixture(word)
+        report = inspect_docx_structure(path)
+        self.assertFalse(report['passed'])
+        self.assertIn('cv_tables_prohibited', report['issues'])
+        self.assertIn('cv_multiple_columns_prohibited', report['issues'])
+        self.assertIn('cv_text_boxes_prohibited', report['issues'])
+
+    def test_header_text_graphics_and_invalid_docx_fail(self):
+        doc = self.create_docx_fixture('<w:p><w:drawing/></w:p>',
+                                       '<w:p><w:r><w:t>Private contact</w:t></w:r></w:p>')
+        report = inspect_docx_structure(doc)
+        self.assertFalse(report['passed'])
+        self.assertIn('cv_graphics_prohibited', report['issues'])
+        self.assertIn('cv_header_footer_text_prohibited', report['issues'])
+        corrupt = Path(doc.parent) / 'corrupt.docx'
+        corrupt.write_bytes(b'NOT A ZIP')
+        self.assertIn('invalid_docx_structure', inspect_docx_structure(corrupt)['issues'])
 
     def test_second_page_is_hard_failure(self):
         with tempfile.TemporaryDirectory() as directory:
