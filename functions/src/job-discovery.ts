@@ -151,7 +151,7 @@ export function smartJobRank(job: JobListing, profile: TargetProfile | null, now
   const roleFit = Math.max(0, ...profile.targetRoles.map(role =>
     title === normalizeJobText(role) ? 1 : overlap(job.designation, role)));
   if (roleFit > 0) {
-    score += Math.round(roleFit * 45);
+    score += Math.round(roleFit * 40);
     reasons.push('Matches a target role');
   }
   const regionFit = profile.targetLocations.some(loc => {
@@ -174,7 +174,7 @@ export function smartJobRank(job: JobListing, profile: TargetProfile | null, now
   const ageDays = (now.getTime() - Date.parse(job.postedAt ?? job.discoveredAt)) / 86_400_000;
   const freshness = Number.isFinite(ageDays) ? Math.max(0, 5 - Math.floor(Math.max(0, ageDays) / 7)) : 0;
   score += freshness;
-  return { score: Math.min(score, 105), reasons };
+  return { score: Math.min(score, 100), reasons };
 }
 
 export function sortJobListings(rows: readonly JobWithState[], method: z.infer<typeof jobSortSchema>,
