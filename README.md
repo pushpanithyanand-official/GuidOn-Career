@@ -83,3 +83,10 @@ firebase emulators:exec --only auth,firestore,functions,storage --project demo-g
 ```
 
 **Safety:** `CV_UPLOADS_ENABLED` is disabled by default; do not set it to true unless isolated cloud storage, security tests, scanning, retention and explicit consent are ready. The current production-bound `storage.rules` remains deny-all.
+
+
+### New job discovery and creative CV contracts
+
+The draft backend includes per-user favourites, application milestones (CV Preparing, CV Prepared, Applied, Applied + Connected, Rejected, Not Interested), status-event history, Smart Sort and the screenshot-inspired Filter & Sort API. It also includes an opt-in **Think Creatively** drafting mode, which changes truthful wording and emphasis but never alters unverified facts, real employers or official designations. Generated CVs must be single-column with **no tables**. The UI is intentionally left unchanged for the UI/UX designer.
+
+Read [Job Discovery and Creative Mode](docs/JOB_DISCOVERY_CREATIVE_MODE.md) and [Strict CV Builder Specification](docs/CV_BUILDER_STRICT_SPEC.md). Discovery ingestion, scalable search indexing and live CV AI generation are not implemented or deployed.
