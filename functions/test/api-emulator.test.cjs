@@ -128,6 +128,24 @@ test('two signed-in users cannot read or change the other user’s career worksp
     assert.equal((await alice.call('getMyCvWorkspaceReport', {
       workspaceId: created.workspaceId,
     })).stage, 'profile_match');
+    const creativeMode = await alice.call('setMyCvGenerationMode', {
+      workspaceId: created.workspaceId,
+      modeChangeId: '550e8400-e29b-41d4-a716-446655440020',
+      expectedStageVersion: 1,
+      generationMode: 'think_creatively',
+      acknowledgeFactPreservation: true,
+    });
+    assert.equal(creativeMode.generationMode, 'think_creatively');
+    assert.equal((await alice.call('getMyCvWorkspaceReport', {
+      workspaceId: created.workspaceId,
+    })).generationMode, 'think_creatively');
+    await assert.rejects(bob.call('setMyCvGenerationMode', {
+      workspaceId: created.workspaceId,
+      modeChangeId: '550e8400-e29b-41d4-a716-446655440019',
+      expectedStageVersion: 1,
+      generationMode: 'think_creatively',
+      acknowledgeFactPreservation: true,
+    }), error => error.code === 'functions/not-found');
 
     const audit = await alice.call('readMyCvAuditArtifact', {
       workspaceId: created.workspaceId, artifactId: report.artifacts[0].id,
@@ -155,6 +173,66 @@ test('two signed-in users cannot read or change the other user’s career worksp
     // Ordinary signed-in clients still cannot mutate these Firestore records.
     const admin = initializeAdmin({ projectId }, 'cv-api-test-admin');
     try {
+      const catalog = getAdminFirestore(admin).collection('jobCatalog');
+      const j1 = '550e8400-e29b-41d4-a716-446655440021';
+      const j2 = '550e8400-e29b-41d4-a716-446655440022';
+      const j3 = '550e8400-e29b-41d4-a716-446655440023';
+      const job = (company, designation, location, category, at) => ({
+        company, designation, location, source: {
+          category, name: category, url: 'https://jobs.example.test/details',
+        }, discoveredAt: at, postedAt: at, skills: ['Financial reporting'],
+        department: { name: designation.includes('Analyst') ? 'Finance' : 'Tax',
+          provenance: 'inferred_from_title' },
+      });
+      await Promise.all([
+        catalog.doc(j1).set(job('Alpha','Financial Analyst','Dublin, Ireland','Employer ATS','2026-11-21T09:00:00Z')),
+        catalog.doc(j2).set(job('Beacon','Tax Manager','Cork, Ireland','Linked Job Link','2026-11-22T09:00:00Z')),
+        catalog.doc(j3).set(job('Alpha','Credit Analyst','Dublin, Ireland','Employer ATS','2026-11-23T09:00:00Z')),
+      ]);
+      const allJobs = await alice.call('getMyJobListings', { sort:'newest', pageSize:1,
+        filters: { statusPreset:'all' } });
+      assert.equal(allJobs.totalMatches,3);
+      assert.equal(allJobs.jobs.length,1);
+      assert.equal(allJobs.hasMore,true);
+      assert.equal(allJobs.filtersAppliedBeforePagination,true);
+      const filteredJobs = await alice.call('getMyJobListings', {
+        filters: { statusPreset:'all', company:{include:['Alpha'],exclude:[]},
+          location:{include:['Dublin, Ireland'],exclude:[]},
+          designation:{include:[],exclude:['Credit Analyst']} },
+        sort:'newest', page:1, pageSize:1,
+      });
+      assert.equal(filteredJobs.totalMatches,1);
+      assert.equal(filteredJobs.jobs[0].id,j1);
+      const favourite = await alice.call('setMyJobDecision', {
+        jobId:j1, changeId:'550e8400-e29b-41d4-a716-446655440024',
+        expectedVersion:0, favorite:true,
+      });
+      assert.equal(favourite.favorite,true);
+      assert.equal(favourite.status,'discovered');
+      await assert.rejects(alice.call('setMyJobDecision', {
+        jobId:j1, changeId:'550e8400-e29b-41d4-a716-446655440025',
+        expectedVersion:1, status:'applied_connected',
+      }), error => error.code === 'functions/failed-precondition');
+      const applied = await alice.call('setMyJobDecision', {
+        jobId:j1, changeId:'550e8400-e29b-41d4-a716-446655440026',
+        expectedVersion:1, status:'applied_connected', userConfirmed:true,
+      });
+      assert.equal(applied.status,'applied_connected');
+      assert.equal(applied.favorite,true);
+      const bobJob = await bob.call('getMyJobListings', { filters:{statusPreset:'all'} });
+      assert.equal(bobJob.jobs.find(x => x.id === j1).userState.favorite,false);
+      assert.equal(bobJob.jobs.find(x => x.id === j1).userState.status,'discovered');
+      const favOnly = await alice.call('getMyJobListings', {
+        filters:{ favoritesOnly:true, statusPreset:'all' },
+      });
+      assert.equal(favOnly.totalMatches,1);
+      assert.equal(favOnly.jobs[0].id,j1);
+      const timelines = await alice.call('getMyJobTimeline', {jobId:j1});
+      assert.equal(timelines.changes.length,2);
+      await alice.call('saveMyJobFilters', { favoritesOnly:true, statusPreset:'all' });
+      assert.equal((await alice.call('getMyJobFilters')).filters.favoritesOnly,true);
+      assert.equal((await bob.call('getMyJobFilters')).filters.favoritesOnly,false);
+
       const workspaceRef = getAdminFirestore(admin).collection('users')
         .doc(alice.auth.currentUser.uid)
         .collection('jobCvWorkspaces').doc(created.workspaceId);
