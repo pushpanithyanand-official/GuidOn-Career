@@ -110,3 +110,58 @@ Interface work can proceed without depending on the original React pages, using 
 - `completeBaseCvUpload`: status **uploaded**, scan status **not_scanned**; AI processing is deliberately not implemented yet.
 
 These are backend states. Their visual representation and interaction design are owned by the UI/UX designer.
+
+
+---
+
+## CV Builder API contracts and job folder (draft)
+
+See [strict CV builder specifications](CV_BUILDER_STRICT_SPEC.md), which are also preserved in Master Plan Addendum v1.2.
+
+### Authenticated callable endpoints (code exists, NOT deployed)
+
+| Callable name | Important input | Output / purpose |
+| --- | --- | --- |
+| `createMyCvWorkspace` | `{clientRequestId:UUID,company,designation,location,originalJd,sourceUrl?,baseCvId?}` | Creates one private immutable job folder and writes original JD |
+| `getMyCvWorkspaceReport` | `{workspaceId:UUID}` | Returns stage, gaps when available, pre/post score snapshots, token totals, model events and private artifact manifest |
+| `readMyCvAuditArtifact` | `{workspaceId:UUID,artifactId:UUID}` | Reads a small JSON/text file only for the authenticated folder owner; verifies SHA-256 before returning |
+| `submitMyCvGapFeedback` | `{workspaceId,feedbackId,expectedStageVersion,feedback:{acknowledged:true,comment,userRequestedChanges,confirmedFactIds}}` | Saves the user comment in the named folder and advances only from `awaiting_user_feedback` |
+| `requestMyCvRevision` | `{workspaceId,revisionRequestId,expectedStageVersion,comment}` | Immutable revision request for a CV in a revisable stage; never overwrites prior versions |
+
+**Internal backend-only APIs:** `recordCvPipelineStage`, `recordCvScoreSnapshot`, `writeCvAuditArtifact`, `recordCvModelUsage`; these are deliberately **not exported as client-callable functions**, preventing clients from inventing token usage or recruiting scores.
+
+### Job folder example
+
+```text
+users/{uid}/job-cv-workspaces/
+  Example Company - Financial Analyst - Dublin Ireland__<uuid>/
+    01-jd/original.json
+    01-jd/cleaned.json                         (future processing stage)
+    02-match/stage-<run-id>-input.json         (future model output)
+    03-gaps/pre-cv-score-<snapshot-id>.json  (trusted scoring)
+    03-gaps/feedback-<comment-id>.json        (user comment)
+    04-generation/stage-<run-id>-output.json  (future CV workflow)
+    05-cv/post-cv-score-<snapshot-id>.json   (rendered output scoring)
+    06-usage/model-<event-id>.json            (provider-reported usage)
+    07-revisions/request-<revision-id>.json  (user-requested rework)
+```
+
+The Firestore private manifest references each immutable Cloud Storage artifact by path, SHA-256 and version. Source CVs are kept separately as private originals; the job folder contains only job-associated references/snapshots and generated content.
+
+### Score semantics
+
+- `rawAts` measures **distinct relevant JD keyword coverage**; `pre_cv` assesses available verified profile evidence, `post_cv` examines the actual exported CV text.
+- `recruiterFit` assesses evidence across six documented categories, versioned as `recruiter-v1`. It is not a real employer recruiter or ATS score.
+- When extraction is too uncertain for a valid score, use `null` / `needs_review`; never manufacture a 0–100 number.
+- Record each score snapshot with the confirmed `profileRevisionId`; post-CV snapshots additionally require `cvVersionId`.
+- Full matched/missing keyword lists, rationale, evidence IDs and gap detail live in private audit files.
+
+### Token counter semantics
+
+Each provider call records `provider`, `model`, `stage`, `requestId`, `measurement='provider_reported'`, `inputTokens`, `outputTokens`, `totalTokens`, optional `cachedInputTokens` and `reasoningOutputTokens`. A time-stamped pricing source may yield estimated USD cost; without it the API reports the usage but marks cost as unavailable. Every rerun is independently accountable.
+
+### UI/UX handoff
+
+The designer needs only these service states and payloads. Profile UI, JD review, gap popup, token meter, score widgets, document preview, compare-versions view and download presentation may all be redesigned. The backend enforces ownership, evidence verification, mandatory stage order, score provenance, audit storage and rendered one-page quality gates.
+
+The current work is a **foundation**, not a completed live AI-to-DOCX workflow. Cloud storage enablement, provider integrations, secure binary download and real user CV template acceptance tests remain future implementation gates.
