@@ -968,3 +968,16 @@ See [Phase Acceptance Audit](MASTER_PLAN_STAGE_AUDIT.md), [Hosting Launch Plan](
 Complete the actual Firebase services, Auth and privacy gates, real CV upload/scanning/AI extraction, source-grounded JD/profile matching, user-facing gap review, strict one-page output with actual pre/post dual scores, token/cost audit, versioned reruns, and tested secure downloads before treating core CV generation as finished. Keep legacy Chrome extension migration, current-page-only autofill, separate Gmail permissions and future application/interview intelligence intact.
 
 The **UI/UX designer retains full control** of final screens; the implemented screens are temporary functional scaffolding.
+
+
+---
+
+## Firebase Web App client registration checkpoint — 23 November 2026
+
+The project owner supplied and registered the public Firebase JS SDK configuration for Web App `1:752868294981:web:1d58d1f90348e9cbd6fe2c` in the exact Firebase project **`guidon-career-fcda2`**. The browser SDK identifiers (including the optional measurement ID) are committed as public client configuration in `src/firebase-web-config.ts` and used by `src/firebase.ts`. The Hosting workflow no longer requires these values separately as GitHub environment variables.
+
+This completes the **Web App configuration** part of Phase 0 only. It does **not** establish that Authentication sign-in providers, Firestore database, Cloud Functions, Hosting site, OIDC deployment identity or a verified `web.app` release are enabled. The project remains on **Spark**; the existing Functions-backed private platform is **still gated and not operational**. The Hosting-only GitHub workflow forces the safe public-preview mode, with `VITE_GUIDON_CORE_ENABLED=false`.
+
+**Next owner-side console action:** enable Google and Email/Password in Firebase Authentication, then configure standard Hosting. Before any private candidate information is collected, implement and validate an approved backend/permission model (Spark-compatible alternative or Blaze-based Functions), with restrictive Firestore/Storage rules and two-user security tests. No service-account secrets, Gmail access or personal CV data are stored in the public browser config.
+
+See [Firebase Project Setup](FIREBASE_PROJECT_SETUP.md) and [Hosting Launch Plan](WEBAPP_HOSTING_LAUNCH.md). All original master-plan phases remain subject to their existing complete exit criteria.
