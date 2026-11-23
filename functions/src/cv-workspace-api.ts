@@ -513,3 +513,23 @@ export const approveMyCvVersion = onCall(settings, async request => {
   });
   return { stage: 'approved', cvVersionId: input.cvVersionId, approvalId: input.approvalId };
 });
+
+/** Lightweight private CV jobs list; no document bodies or cross-user data. */
+export const listMyCvWorkspaces = onCall(settings, async request => {
+  const uid = uidFor(request);
+  const input = validate(z.object({ limit: z.number().int().min(1).max(100).default(50) }).strict(), request.data ?? {});
+  const snapshot = await collection(uid).orderBy('createdAt', 'desc').limit(input.limit).get();
+  return { workspaces: snapshot.docs.map(doc => ({
+    workspaceId: doc.id,
+    jobId: doc.data().jobId ?? null,
+    folderName: doc.data().folderName,
+    company: doc.data().company,
+    designation: doc.data().designation,
+    location: doc.data().location,
+    stage: doc.data().stage,
+    stageVersion: doc.data().stageVersion,
+    generationMode: doc.data().generationMode ?? 'evidence_first',
+    approvedCvVersionId: doc.data().approvedCvVersionId ?? null,
+    latestCvQualityPassed: doc.data().latestCvQualityPassed === true,
+  })) };
+});
