@@ -81,23 +81,63 @@ export {
   listMyProfileRevisions,
 } from './profile-api';
 
-/** Upload is user-controlled; creates a bounded single-use storage slot, not AI processing. */
+/** Create a short-lived, idempotent CV upload slot with per-user abuse limits. */
 export const beginBaseCvUpload = onCall(settings, async request => {
   const uid = uidFor(request);
   const input = parse(cvUploadInput, request.data);
   const user = userDoc(uid);
-  const ref = user.collection('baseCvs').doc();
-  const storagePath = cvStoragePath(uid, ref.id);
-  await ref.create({
-    ...input,
-    storagePath,
-    status: 'awaiting_upload',
-    createdAt: FieldValue.serverTimestamp(),
-    updatedAt: FieldValue.serverTimestamp(),
-    schemaVersion: 1,
-    extractionStatus: 'not_requested',
+  const uploadId = input.clientRequestId;
+  const ref = user.collection('baseCvs').doc(uploadId);
+  const counterRef = user.collection('usage').doc('baseCvUploads');
+  const storagePath = cvStoragePath(uid, uploadId);
+  const today = new Date().toISOString().slice(0, 10);
+  const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+
+  await db.runTransaction(async tx => {
+    const [existing, counts] = await Promise.all([tx.get(ref), tx.get(counterRef)]);
+    if (existing.exists) {
+      const previous = existing.data()!;
+      if (previous.fileName !== input.fileName ||
+          previous.mimeType !== input.mimeType ||
+          previous.sizeBytes !== input.sizeBytes) {
+        throw new HttpsError('already-exists', 'This upload request ID belongs to a different file.');
+      }
+      return; // An identical retry must not consume a second quota slot.
+    }
+
+    const usage = counts.data() ?? {};
+    const dailyCount = usage.day === today ? Number(usage.dailyCount ?? 0) : 0;
+    const totalCount = Number(usage.totalCount ?? 0);
+    if (dailyCount >= 6 || totalCount >= 100) {
+      throw new HttpsError('resource-exhausted', 'Base CV upload limit reached. Try again later or contact support.');
+    }
+    tx.create(ref, {
+      ...input,
+      storagePath,
+      status: 'awaiting_upload',
+      scanStatus: 'not_scanned',
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
+      expiresAt,
+      schemaVersion: 2,
+      extractionStatus: 'not_requested',
+    });
+    tx.set(counterRef, {
+      day: today,
+      dailyCount: dailyCount + 1,
+      totalCount: totalCount + 1,
+      updatedAt: FieldValue.serverTimestamp(),
+    }, { merge: true });
   });
-  return { uploadId: ref.id, storagePath, maxSizeBytes: 10 * 1024 * 1024 };
+
+  const snapshot = await ref.get();
+  const deadline = snapshot.data()?.expiresAt;
+  return {
+    uploadId,
+    storagePath,
+    maxSizeBytes: 10 * 1024 * 1024,
+    expiresAt: deadline?.toDate?.().toISOString?.() ?? expiresAt.toISOString(),
+  };
 });
 
 /** Check the authenticated user's uploaded object before recording completion. */
@@ -110,6 +150,10 @@ export const completeBaseCvUpload = onCall(settings, async request => {
   const stored = record.data()!;
   if (stored.status === 'uploaded') return { uploadId, status: 'uploaded' };
   if (stored.status !== 'awaiting_upload') throw new HttpsError('failed-precondition', 'Upload is not awaiting completion.');
+  const deadline: Date | undefined = stored.expiresAt?.toDate?.();
+  if (deadline && deadline.getTime() < Date.now()) {
+    throw new HttpsError('deadline-exceeded', 'Upload permission expired; create a new upload request.');
+  }
   const path = cvStoragePath(uid, uploadId);
   if (stored.storagePath !== path) throw new HttpsError('failed-precondition', 'Upload path mismatch.');
   const [object] = await getStorage().bucket().file(path).getMetadata().catch((error: unknown) => {
@@ -124,6 +168,7 @@ export const completeBaseCvUpload = onCall(settings, async request => {
   }
   await doc.update({
     status: 'uploaded',
+    scanStatus: 'not_scanned',
     updatedAt: FieldValue.serverTimestamp(),
     uploadedAt: FieldValue.serverTimestamp(),
     objectGeneration: object.generation ?? null,
