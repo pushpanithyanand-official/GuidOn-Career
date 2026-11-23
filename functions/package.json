@@ -9,7 +9,7 @@
   "scripts": {
     "build": "tsc",
     "check": "tsc --noEmit",
-    "test": "npm run build && node --test test/contracts.test.cjs test/cv-workflow.test.cjs test/cv-audit.test.cjs test/cv-matching.test.cjs test/cv-versions.test.cjs test/cv-prompts.test.cjs",
+    "test": "npm run build && node --test test/contracts.test.cjs test/cv-workflow.test.cjs test/cv-audit.test.cjs test/cv-matching.test.cjs test/cv-versions.test.cjs test/cv-prompts.test.cjs test/job-discovery.test.cjs test/cv-generation-mode.test.cjs",
     "test:security": "node --test test/security-emulator.test.cjs",
     "test:api": "node --test test/api-emulator.test.cjs"
   },
