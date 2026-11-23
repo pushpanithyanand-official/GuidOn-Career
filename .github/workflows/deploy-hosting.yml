@@ -60,6 +60,7 @@ jobs:
           VITE_FIREBASE_PROJECT_ID: guidon-career-fcda2
           VITE_FIREBASE_STORAGE_BUCKET: ${{ vars.GUIDON_FIREBASE_STORAGE_BUCKET }}
           VITE_FIREBASE_APP_ID: ${{ vars.GUIDON_FIREBASE_WEB_APP_ID }}
+          VITE_GUIDON_CORE_ENABLED: ${{ vars.GUIDON_CORE_ENABLED || 'false' }}
         run: |
           npm install --no-audit --no-fund
           npm run check
