@@ -126,3 +126,16 @@ Run CI and review the [phase audit](docs/MASTER_PLAN_STAGE_AUDIT.md) before manu
 ### Firebase Web App registration confirmed (23 November 2026)
 
 The owner supplied the public SDK `firebaseConfig` for `guidon-career-fcda2`. Its browser identifiers are now in `src/firebase-web-config.ts`; GitHub environment variables are **not needed** for these public values. `src/firebase.ts` validates the project ID/App ID/Auth domain, and the Hosting workflow builds a safe **Spark preview** with private APIs disabled. The site is **not yet deployed**, and full account/job/CV workflows still require server-side backend availability. Next owner action: enable Google and Email/Password under Firebase Authentication, then configure standard Hosting.
+
+
+## Architecture freeze before additional feature implementation
+
+**New documentation, 23 November 2026:** The master plan has an **append-only Addendum v1.6** establishing the database/security classification, multi-source job intake pipeline, AI token/caching/latency controls and phased implementation gates. This is **planning and consistency work**, not a live Firestore migration.
+
+Read in this order:
+1. [Data architecture and AI efficiency](docs/ARCHITECTURE_DATA_AI_EFFICIENCY_SPEC.md) — public/shared/private/restricted classes, typed modules, caching, token budgets and correctness rules.
+2. [Canonical database schema and migration](docs/DATABASE_CANONICAL_SCHEMA.md) — identifiers, owner-access matrix, `users/` vs `sparkUsers/` conflict, safe cutover and rule review.
+3. [Multi-source intake, JD-to-CV-to-application pipeline](docs/INTEGRATED_PIPELINE_AND_PHASE_GATES.md) — source adapters, end-to-end versioned handoffs, original Phase 0–9 mapping and release gates.
+4. [Updated master plan](docs/GUIDON_CAREER_MASTER_PLAN.md) and [phase audit](docs/MASTER_PLAN_STAGE_AUDIT.md).
+
+The owner confirmed Firebase Hosting and Google sign-in on mobile. **Private Firestore profile/job persistence, generated CVs, email connectors and Chrome autofill remain not live.** Do not deploy the provisional `firestore.rules` or enable Functions-dependent pages based on Auth verification alone. Canonical schema decision and cross-user security tests are prerequisites. The separate Firebase project `guidon-career-fcda2` is still distinct from the optional `guidon-career` worker project.
