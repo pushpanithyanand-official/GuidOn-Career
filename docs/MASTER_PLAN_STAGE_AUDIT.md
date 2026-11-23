@@ -102,3 +102,25 @@ The original phase conclusions **remain PARTIAL**, but evidence increased after 
 - **Phase 9:** Local CI and two-user emulator suite; actual production privacy, cost, credentials, retention/export and performance gates remain pending.
 
 Project mapping: Firebase **`guidon-career-fcda2`**; separately supplied GCP project **`guidon-career`** is *not* interchangeable and is reserved for possible separately authorised workers. See [Firebase Project Setup](FIREBASE_PROJECT_SETUP.md). **No live `web.app` release is verified.**
+
+
+## Architecture reconciliation audit — Addendum v1.6 (23 November 2026)
+
+**The master plan has been extended; architecture and migration have NOT been approved for production use.** The original Phases 0–9 are still **PARTIAL** and cannot be marked complete solely because code or architecture documents exist.
+
+| Gap / boundary found in the current draft GitHub code | Required resolution | Current state |
+| --- | --- | --- |
+| Functions use `users/{uid}` while Spark draft rules use `sparkUsers/{uid}` | Freeze one canonical `users/{uid}` logical model; versioned migration/cutover and matching client/server adapters | **OPEN — BLOCKS LIVE PRIVATE DATA** |
+| Separate `savedJobs` and `manualJobs` / new `jobs` paths | One owner job identity with optional rights-approved `catalogJobId`, source observations and saved status history | **OPEN** |
+| CV workspace name differs (`jobCvWorkspaces` vs `cvWorkspaces`) | Shared `workspaceId`, exact userJob/JD/profile refs, immutable outputs and migrations | **OPEN** |
+| Provisional Spark client writes to `preCvScore`/`gaps` and other claimed derived results | Keep verified scores/QA/model usage/approved file checksums server-owned; treat browser drafts as untrusted | **SECURITY REVIEW REQUIRED** |
+| Raw job documents may contain user-captured JD/email content | Separate private capture by default from source-rights-reviewed shared catalogue; provenance and retention | **SOURCE/RIGHTS DESIGN** |
+| Cache and AI workflow are not a single reusable graph | Versioned stage inputs/outputs, private cache keys, selective model routing, invalidation and token ledger | **DESIGNED, NOT WIRED** |
+| Existing extension, Gmail and app records have not been unified in a deployed system | One `userJobId`, `workspaceId`, `cvVersionId`, `applicationId`, event ID and source provenance across modules | **NOT LIVE** |
+| Private CV document processing remains offline/synthetic | Secure base-CV upload/scanning, AI provider, strict one-page real base-format QA and approval | **NOT LIVE** |
+| Live website and Google login | Owner's Android screenshot shows authenticated Firebase sign-in at `guidon-career-fcda2.web.app` | **USER-VERIFIED LIVE AUTH-ONLY** |
+| Database/Functions/Chrome/Gmail release | Must satisfy original phase acceptance tests, two-user security and secure permissions | **NOT DEPLOYED/VERIFIED** |
+
+**New pre-build Architecture Gate A0:** one canonical schema + privacy/role matrix + typed module contracts + source rights + cache/token policy + version/event lineage + reversible migration. **This gate is now documented, not signed off.** It must be signed off and security-tested before enabling Firestore writes with real candidate information.
+
+**References:** [Canonical Database Schema](DATABASE_CANONICAL_SCHEMA.md), [Architecture & AI Efficiency](ARCHITECTURE_DATA_AI_EFFICIENCY_SPEC.md), [Integrated Sources/Pipeline/Phases](INTEGRATED_PIPELINE_AND_PHASE_GATES.md), and [Master Plan Addendum v1.6](GUIDON_CAREER_MASTER_PLAN.md). This audit supersedes older snapshot statements claiming there is no deployed Hosting URL; it does **not** supersede original phase completion criteria.
