@@ -93,3 +93,31 @@ bash scripts/deploy-spark-preview.sh DEPLOY_GUIDON_STATIC_PREVIEW
 - If the owner wants to retain mandatory GitHub-environment reviewers for all future deploys, use the existing protected workflow after configuring OIDC rather than this manual preview route. The final production rollout should use the protected pipeline.
 
 The full private application is **still blocked** on a safe Spark-compatible data-access implementation or a later approved Blaze Functions deployment, in addition to secure CV extraction, document output, privacy and two-user live tests.
+
+## Owner-reported first Hosting deployment and next Spark Auth smoke test
+
+**Owner update, 23 November 2026:** The user reports successfully publishing the first static website to Firebase Hosting `guidon-career-fcda2`. The public address is `https://guidon-career-fcda2.web.app`. Direct independent verification from this chat is currently unavailable, so compare the page's rendered heading and Firebase Console's latest release timestamp rather than assuming the exact page content.
+
+**Next optional verification stage (still Spark):** An isolated Firebase **Authentication-only** preview is implemented. It can test Google Sign-In and Email/Password without Cloud Functions or Firestore access. No CV or candidate history is collected.
+
+From the *already cloned* owner-authorized Cloud Shell folder:
+
+```bash
+cd ~/guidon-spark-preview
+git pull --ff-only origin feat/backend-foundation
+VITE_GUIDON_AUTH_PREVIEW_ENABLED=true bash scripts/deploy-spark-preview.sh DEPLOY_GUIDON_STATIC_PREVIEW
+```
+
+This builds and checks the website and publishes the sign-in-only preview. `VITE_GUIDON_CORE_ENABLED=false` is forced even when this test mode is on. Only Firebase Authentication accounts (email/sign-in identity) are handled; the Career Intelligence Profile, jobs, CV generation and private data APIs remain disabled.
+
+Before testing, verify Firebase Console → Authentication → Settings → **Authorized domains** includes `guidon-career-fcda2.web.app`. The user previously showed Google and Email/Password enabled, but domain-level authorization was not confirmed. If testing Google popup sign-in fails with `auth/unauthorized-domain`, add that exact domain there; do not whitelist unrelated hostnames.
+
+**Test checklist:**
+1. Navigate to the public Hosting domain. See the login form rather than a fully operational CV dashboard.
+2. Sign in via Google using an account you control; verify the resulting Auth-only confirmation page and successful sign-out.
+3. Optionally sign in using a dedicated test email/password. Avoid creating unnecessary real candidate accounts.
+4. Verify Firebase Console → Authentication → Users shows the test account, and no candidate data or Cloud Functions were created.
+5. Confirm browser refresh preserves the sign-in state, then sign out. Test an incognito browser where appropriate.
+6. If the app fails or public registration is not desired, redeploy the previous static-only view with `VITE_GUIDON_AUTH_PREVIEW_ENABLED=false`.
+
+**Release boundary:** A successful Auth-only test does **not** mean original phases 1–7 are complete. Profile/job persistence still needs a separately reviewed, strict owner-scoped Firestore security model on Spark or an approved Functions-backed project on Blaze, followed by real two-user privacy tests. Never publish permissive Firestore test-mode rules.
