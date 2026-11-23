@@ -177,6 +177,7 @@ export async function recordCvModelUsage(uid: string, workspaceId: string, event
     // These counters include all calls, even when more than 250 history rows exist.
     tx.set(workspace.collection('usageAggregates').doc('all'), increments, { merge: true });
     tx.set(workspace.collection('usageAggregates').doc(usage.cvVersionId ?? 'pre_cv'), increments, { merge: true });
+    tx.set(workspace.collection('usageAggregates').doc('stage_' + usage.stage), increments, { merge: true });
   });
   return { eventId, costUsd: estimatedCostUsd };
 }
@@ -298,7 +299,7 @@ export const getMyCvWorkspaceReport = onCall(settings, async request => {
     gaps: record.gapSummary ?? [],
     tokenCounter: counters,
     tokenCounterByVersion: usageByVersion.docs
-      .filter(doc => doc.id !== 'all')
+      .filter(doc => doc.id !== 'all' && !doc.id.startsWith('stage_'))
       .map(doc => {
         const usageStats = doc.data();
         return {
@@ -311,6 +312,22 @@ export const getMyCvWorkspaceReport = onCall(settings, async request => {
           reasoningOutputTokens: usageStats.reasoningOutputTokens ?? 0,
           estimatedUsd: Math.round((usageStats.estimatedUsd ?? 0) * 1_000_000) / 1_000_000,
           unpricedRequests: usageStats.unpricedRequests ?? 0,
+        };
+      }),
+    tokenCounterByStage: usageByVersion.docs
+      .filter(doc => doc.id.startsWith('stage_'))
+      .map(doc => {
+        const stats = doc.data();
+        return {
+          stage: doc.id.slice(6),
+          requests: stats.requests ?? 0,
+          inputTokens: stats.inputTokens ?? 0,
+          outputTokens: stats.outputTokens ?? 0,
+          totalTokens: stats.totalTokens ?? 0,
+          cachedInputTokens: stats.cachedInputTokens ?? 0,
+          reasoningOutputTokens: stats.reasoningOutputTokens ?? 0,
+          estimatedUsd: Math.round((stats.estimatedUsd ?? 0) * 1_000_000) / 1_000_000,
+          unpricedRequests: stats.unpricedRequests ?? 0,
         };
       }),
     tokenUsageEvents: tokenEntries.docs.map(doc => ({
