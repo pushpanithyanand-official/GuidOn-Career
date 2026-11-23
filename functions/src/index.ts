@@ -182,3 +182,10 @@ export const completeBaseCvUpload = onCall(settings, async request => {
   });
   return { uploadId, status: 'uploaded' };
 });
+
+export {
+  createMyCvWorkspace,
+  getMyCvWorkspaceReport,
+  submitMyCvGapFeedback,
+  requestMyCvRevision,
+} from './cv-workspace-api';
