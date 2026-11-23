@@ -185,6 +185,7 @@ export const completeBaseCvUpload = onCall(settings, async request => {
 
 export {
   createMyCvWorkspace,
+  listMyCvWorkspaces,
   getMyCvWorkspaceReport,
   readMyCvAuditArtifact,
   submitMyCvGapFeedback,
