@@ -167,3 +167,15 @@ Before declaring Gmail 1 complete: separate test mailboxes and users, consent an
 Before declaring Gmail 2–6 complete: multiple same-employer roles, unknown/forwarded senders, no false rejection/offer changes, replay-safe updates, timezones/reschedules, event reversals, unreadable/ambiguous messages, privacy/export/delete, calibrated match review and real user sign-off.
 
 **No live Gmail connection, mailbox polling, OAuth permission grant, automated event classifier or calendar write has been requested or executed here.** This document only adds roadmap requirements.
+
+
+## Canonical architecture alignment — Master Plan Addendum v1.6
+
+The Gmail roadmap remains **future, not enabled**. Its capability A job alerts and capability B application/interview intelligence must use the *same* typed source observation and private user/application records as the website and Chrome extension. See [Canonical Database/Migration](DATABASE_CANONICAL_SCHEMA.md) and [Unified Pipeline](INTEGRATED_PIPELINE_AND_PHASE_GATES.md).
+
+- Every message is scoped to an authenticated UID/authorised connection, with a purpose-limited consent record. No Gmail login privilege follows automatically from Firebase Google sign-in.
+- Source observations from email are **private by default**; never promote forwarded emails, candidate details or recruiter correspondence to the shared job catalogue without independently valid rights.
+- Deduplicate on UID + provider connection + message/thread identifier and verified job/application references. Same employer with multiple roles requires requisition/title/thread evidence; ambiguous matches remain in a review queue.
+- Application status is derived from existing immutable `applicationId + eventId` histories, not a separate Gmail state table. Alert emails never imply applied; offers/rejections always require user confirmation.
+- Store only necessary extracted fields, redacted pointers and purpose-specific metadata; OAuth tokens remain in server-only encrypted storage. Apply revocation, export/deletion and retention policy.
+- AI may resolve ambiguous email classification under a per-user budget, but deterministic rules do the ordinary work. Track prompt/token cost and avoid reclassifying unchanged message versions.
