@@ -981,3 +981,14 @@ This completes the **Web App configuration** part of Phase 0 only. It does **not
 **Next owner-side console action:** enable Google and Email/Password in Firebase Authentication, then configure standard Hosting. Before any private candidate information is collected, implement and validate an approved backend/permission model (Spark-compatible alternative or Blaze-based Functions), with restrictive Firestore/Storage rules and two-user security tests. No service-account secrets, Gmail access or personal CV data are stored in the public browser config.
 
 See [Firebase Project Setup](FIREBASE_PROJECT_SETUP.md) and [Hosting Launch Plan](WEBAPP_HOSTING_LAUNCH.md). All original master-plan phases remain subject to their existing complete exit criteria.
+
+
+---
+
+## Firebase Hosting default site provisioned — first release pending
+
+**23 November 2026 — Append-only infrastructure checkpoint.** The project owner has confirmed via Firebase Console screenshots that the standard Hosting site `guidon-career-fcda2` exists, with the default domains `guidon-career-fcda2.web.app` and `guidon-career-fcda2.firebaseapp.com`. The Hosting dashboard explicitly states **“Waiting for your first release.”** The Google and Email/Password Authentication providers are also shown enabled.
+
+The repository now contains an owner-run, project-bound **Spark-compatible static preview** script: `scripts/deploy-spark-preview.sh`, documented in [Firebase Hosting Launch](WEBAPP_HOSTING_LAUNCH.md). It runs frontend build/tests and deploys **Hosting only** under an interactive Google identity with exact project `guidon-career-fcda2`. It requires explicit release confirmation and forces `VITE_GUIDON_CORE_ENABLED=false`. The separate GitHub Actions OIDC workflow remains the intended protected route for later production releases.
+
+**Not yet complete:** No first Hosting release has been verified in the console; no private Functions-backed account/profile/CV workflow is live on Spark; no Gmail permissions or application automation are activated. The core application's security, CV-first upload, AI generation, extension integration and earlier phase acceptance requirements are unchanged.
