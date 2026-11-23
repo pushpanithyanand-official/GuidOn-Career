@@ -76,7 +76,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install CV render inspection dependency
-        run: python -m pip install PyMuPDF==1.26.7
-      - name: Test one-page, alignment and font safety checks
-        run: python -m unittest -v test_cv_render_qa
+      - name: Install real-document QA dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends libreoffice-writer fonts-liberation fonts-crosextra-carlito
+          python -m pip install -r requirements.txt
+      - name: Test synthetic geometry and real one-page DOCX/PDF generation
+        run: python -m unittest -v test_cv_render_qa test_cv_generate
