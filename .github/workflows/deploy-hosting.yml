@@ -34,11 +34,19 @@ jobs:
           test -n "$GUIDON_PROJECT" || { echo "GUIDON_FIREBASE_PROJECT_ID is missing."; exit 1; }
           test -n "$GUIDON_WIF" || { echo "GUIDON_GCP_WIF_PROVIDER is missing."; exit 1; }
           test -n "$GUIDON_SERVICE_ACCOUNT" || { echo "GUIDON_GCP_DEPLOY_SERVICE_ACCOUNT is missing."; exit 1; }
-          case "$GUIDON_PROJECT" in
-            abhishek-cv-automation|garamaal*|freshmaal*)
-              echo "Existing or unrelated production project is not an allowed GuidOn hosting target."
-              exit 1 ;;
-          esac
+          test "$GUIDON_PROJECT" = "guidon-career-fcda2" || { echo "This workflow is restricted to the GuidOn Firebase project ID."; exit 1; }
+          # This is the Firebase project ID; guidon-career is a separate supplied GCP project.
+      - name: Check public Firebase web-app configuration
+        env:
+          WEB_API_KEY: ${{ vars.GUIDON_FIREBASE_WEB_API_KEY }}
+          WEB_APP_ID: ${{ vars.GUIDON_FIREBASE_WEB_APP_ID }}
+          WEB_AUTH_DOMAIN: ${{ vars.GUIDON_FIREBASE_AUTH_DOMAIN }}
+        run: |
+          set -eu
+          test -n "$WEB_API_KEY" && test -n "$WEB_APP_ID" && test -n "$WEB_AUTH_DOMAIN" || {
+            echo "Register a Web App in guidon-career-fcda2 and configure its public SDK settings before deployment."
+            exit 1
+          }
       - name: Checkout reviewed main branch
         uses: actions/checkout@v4
       - name: Install Node
@@ -46,6 +54,12 @@ jobs:
         with:
           node-version: '22'
       - name: Install and verify static UI
+        env:
+          VITE_FIREBASE_API_KEY: ${{ vars.GUIDON_FIREBASE_WEB_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ vars.GUIDON_FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: guidon-career-fcda2
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ vars.GUIDON_FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_APP_ID: ${{ vars.GUIDON_FIREBASE_WEB_APP_ID }}
         run: |
           npm install --no-audit --no-fund
           npm run check
