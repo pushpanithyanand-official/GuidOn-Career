@@ -63,3 +63,20 @@ jobs:
         run: npm run build --prefix functions
       - name: Test private data rules and two-user callable APIs against local emulators
         run: npx --yes firebase-tools@15.0.0 emulators:exec --only auth,firestore,functions,storage --project demo-guidon-career-security "npm run test:security --prefix functions && npm run test:api --prefix functions"
+
+  cv-render-qa:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: workers
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install CV render inspection dependency
+        run: python -m pip install PyMuPDF==1.26.7
+      - name: Test one-page, alignment and font safety checks
+        run: python -m unittest -v test_cv_render_qa
