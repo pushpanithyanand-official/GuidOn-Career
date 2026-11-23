@@ -31,7 +31,8 @@ export const jobListingSchema = z.object({
   source: z.object({
     category: text(80),
     name: text(120),
-    url: z.string().url().max(2000),
+    // Manual user-entered vacancies may have no verified external Apply URL.
+    url: z.string().url().max(2000).optional(),
   }).strict(),
   discoveredAt: z.string().datetime({ offset: true }),
   postedAt: z.string().datetime({ offset: true }).optional(),
