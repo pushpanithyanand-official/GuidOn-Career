@@ -3,6 +3,8 @@ const assert = require('node:assert/strict');
 const { initializeApp, deleteApp } = require('firebase/app');
 const { getAuth, connectAuthEmulator, createUserWithEmailAndPassword } = require('firebase/auth');
 const { getFunctions, connectFunctionsEmulator, httpsCallable } = require('firebase/functions');
+const { initializeApp: initializeAdmin, deleteApp: deleteAdmin } = require('firebase-admin/app');
+const { getFirestore: getAdminFirestore } = require('firebase-admin/firestore');
 
 const projectId = 'demo-guidon-career-security';
 
@@ -110,6 +112,65 @@ test('two signed-in users cannot read or change the other user’s career worksp
     await assert.rejects(alice.call('createMyCvWorkspace', {
       ...vacancy, uid: bob.auth.currentUser.uid,
     }), error => error.code === 'functions/invalid-argument');
+    // These writes are test-only simulated backend state transitions.
+    // Ordinary signed-in clients still cannot mutate these Firestore records.
+    const admin = initializeAdmin({ projectId }, 'cv-api-test-admin');
+    try {
+      const workspaceRef = getAdminFirestore(admin).collection('users')
+        .doc(alice.auth.currentUser.uid)
+        .collection('jobCvWorkspaces').doc(created.workspaceId);
+      await workspaceRef.update({ stage: 'awaiting_user_feedback', stageVersion: 2 });
+      await assert.rejects(alice.call('submitMyCvGapFeedback', {
+        workspaceId: created.workspaceId,
+        feedbackId: '550e8400-e29b-41d4-a716-446655440005',
+        expectedStageVersion: 2,
+        feedback: { acknowledged: false, userRequestedChanges: false },
+      }), error => error.code === 'functions/invalid-argument');
+      const feedback = await alice.call('submitMyCvGapFeedback', {
+        workspaceId: created.workspaceId,
+        feedbackId: '550e8400-e29b-41d4-a716-446655440005',
+        expectedStageVersion: 2,
+        feedback: { acknowledged: true, userRequestedChanges: false, comment: 'Proceed with confirmed experience.' },
+      });
+      assert.equal(feedback.stage, 'cv_draft');
+      const feedbackReport = await alice.call('getMyCvWorkspaceReport', { workspaceId: created.workspaceId });
+      const feedbackArtifact = feedbackReport.artifacts.find(item => item.category === 'user_feedback');
+      assert.ok(feedbackArtifact);
+      const savedFeedback = await alice.call('readMyCvAuditArtifact', {
+        workspaceId: created.workspaceId, artifactId: feedbackArtifact.id,
+      });
+      assert.match(savedFeedback.text, /Proceed with confirmed experience/);
+
+      const versionId = '550e8400-e29b-41d4-a716-446655440006';
+      await workspaceRef.update({
+        stage: 'ready_for_user_approval', stageVersion: 6,
+        latestCvQualityPassed: false, latestScoredCvVersionId: versionId,
+      });
+      const approval = {
+        workspaceId: created.workspaceId,
+        approvalId: '550e8400-e29b-41d4-a716-446655440007',
+        cvVersionId: versionId,
+        expectedStageVersion: 6,
+        userConfirmed: true,
+      };
+      await assert.rejects(alice.call('approveMyCvVersion', approval),
+        error => error.code === 'functions/failed-precondition');
+      await assert.rejects(bob.call('approveMyCvVersion', approval),
+        error => error.code === 'functions/not-found');
+      await workspaceRef.update({ latestCvQualityPassed: true,
+        latestPostCvScoreSnapshotId: '550e8400-e29b-41d4-a716-446655440008' });
+      const approved = await alice.call('approveMyCvVersion', approval);
+      assert.equal(approved.stage, 'approved');
+      assert.equal((await alice.call('approveMyCvVersion', approval)).stage, 'approved');
+      const approvalReport = await alice.call('getMyCvWorkspaceReport', {
+        workspaceId: created.workspaceId,
+      });
+      assert.equal(approvalReport.stage, 'approved');
+      assert.ok(approvalReport.artifacts.some(item => item.category === 'user_approval'));
+    } finally {
+      await deleteAdmin(admin);
+    }
+
 
   } finally {
     await Promise.all([deleteApp(alice.app), deleteApp(bob.app), deleteApp(visitor.app)]);
