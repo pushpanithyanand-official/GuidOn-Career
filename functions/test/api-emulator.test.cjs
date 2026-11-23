@@ -289,6 +289,52 @@ test('two signed-in users cannot read or change the other user’s career worksp
       }),error => error.code === 'functions/invalid-argument');
 
 
+
+      // A real application record is not a job alert or mere extension fill.
+      await assert.rejects(alice.call('createMyApplication', {
+        jobId:j2, eventId:'550e8400-e29b-41d4-a716-446655440084',
+        status:'submitted', userConfirmed:false,
+      }), error => error.code === 'functions/invalid-argument');
+      const applicationCreated = await alice.call('createMyApplication', {
+        jobId:j2, eventId:'550e8400-e29b-41d4-a716-446655440084',
+        status:'submitted',userConfirmed:true,
+        submittedOn:'2026-11-23',
+      });
+      assert.equal(applicationCreated.applicationId,j2);
+      assert.equal(applicationCreated.status,'submitted');
+      const duplicateApplication = await alice.call('createMyApplication', {
+        jobId:j2, eventId:'550e8400-e29b-41d4-a716-446655440084',
+        status:'submitted',userConfirmed:true,submittedOn:'2026-11-23',
+      });
+      assert.equal(duplicateApplication.duplicate,true);
+      assert.equal((await alice.call('listMyApplications')).applications.length,1);
+      assert.equal((await bob.call('listMyApplications')).applications.length,0);
+      await assert.rejects(bob.call('getMyApplicationTimeline',{applicationId:j2}),
+        error => error.code === 'functions/not-found');
+      const interviewEvent = await alice.call('updateMyApplication', {
+        applicationId:j2,eventId:'550e8400-e29b-41d4-a716-446655440085',
+        expectedVersion:1,status:'interview_scheduled',userConfirmed:true,
+        interview:{startsAt:'2026-12-02T13:30:00+00:00',timezone:'Europe/Dublin'},
+        note:'User confirmed first-round video interview.',
+      });
+      assert.equal(interviewEvent.status,'interview_scheduled');
+      assert.equal(interviewEvent.version,2);
+      const userTimeline = await alice.call('getMyApplicationTimeline',{applicationId:j2});
+      assert.equal(userTimeline.events.length,2);
+      assert.equal(userTimeline.events[0].status,'interview_scheduled');
+      assert.equal(userTimeline.events[1].status,'submitted');
+      await assert.rejects(alice.call('updateMyApplication',{
+        applicationId:j2,eventId:'550e8400-e29b-41d4-a716-446655440086',
+        expectedVersion:1,status:'in_review',userConfirmed:true,
+      }),error=>error.code==='functions/failed-precondition');
+      await assert.rejects(bob.call('updateMyApplication',{
+        applicationId:j2,eventId:'550e8400-e29b-41d4-a716-446655440087',
+        expectedVersion:1,status:'rejected',userConfirmed:true,
+      }),error=>error.code==='functions/not-found');
+      const jobStateAfterSubmit = await alice.call('getMyJobDetails',{jobId:j2});
+      assert.equal(jobStateAfterSubmit.userState.status,'applied');
+      assert.equal((await bob.call('getMyJobDetails',{jobId:j2})).userState.status,'discovered');
+
       const workspaceRef = getAdminFirestore(admin).collection('users')
         .doc(alice.auth.currentUser.uid)
         .collection('jobCvWorkspaces').doc(created.workspaceId);
