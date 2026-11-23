@@ -199,6 +199,7 @@ export const createMyCvWorkspace = onCall(settings, async request => {
     stage: 'jd_review',
     stageVersion: 0,
     schemaVersion: 1,
+    generationMode: 'evidence_first',
     status: 'initializing',
   };
   const previous = await ref.get();
@@ -281,6 +282,7 @@ export const getMyCvWorkspaceReport = onCall(settings, async request => {
     folderName: record.folderName,
     company: record.company, designation: record.designation, location: record.location,
     stage: record.stage, stageVersion: record.stageVersion,
+    generationMode: record.generationMode ?? 'evidence_first',
     status: record.status,
     latestCvQualityPassed: record.latestCvQualityPassed === true,
     latestScoredCvVersionId: record.latestScoredCvVersionId ?? null,
