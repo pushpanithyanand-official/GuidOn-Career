@@ -138,10 +138,12 @@ test('two signed-in users cannot read or change the other user’s career worksp
       workspaceId: created.workspaceId, artifactId: report.artifacts[0].id,
     }), error => error.code === 'functions/not-found');
 
+    const beforeRetry = (await alice.call('getMyCvWorkspaceReport',
+      { workspaceId: created.workspaceId })).artifacts.length;
     const duplicate = await alice.call('createMyCvWorkspace', vacancy);
     assert.equal(duplicate.workspaceId, created.workspaceId);
     assert.equal((await alice.call('getMyCvWorkspaceReport',
-      { workspaceId: created.workspaceId })).artifacts.length, 1);
+      { workspaceId: created.workspaceId })).artifacts.length, beforeRetry);
 
     await assert.rejects(bob.call('getMyCvWorkspaceReport', {
       workspaceId: created.workspaceId,
